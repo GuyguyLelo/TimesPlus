@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="rapport-head">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker">Heures supplémentaires</p>
+    <h1>{{ title }}</h1>
+    <p>Clôture de la paie du mois en cours. Une paie clôturée est archivée et reste en consultation.</p>
+  </div>
+  {% if consultation.courant and not consultation.paye and perms.overtime.close_payroll %}
+    <div class="hs-tools">
+      <a class="btn btn-primary" href="{% url 'overtime:payroll_close' %}"><i class="bi bi-lock"></i> Clôturer la paie</a>
+    </div>
+  {% endif %}
+</div>
+{% if consultation %}
+<div class="rapport-stats">
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-people"></i></span>
+      <div><p>Agents</p><strong>{{ consultation.par_agent|length }}</strong></div>
+    </div>
+  </article>
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-yellow"><i class="bi bi-clock"></i></span>
+      <div><p>Durée</p><strong>{{ consultation.duree }}</strong></div>
+    </div>
+  </article>
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
+      <div><p>Montant</p><strong>{{ consultation.totaux.montant|montant }} <span>{{ site_settings.devise }}</span></strong></div>
+    </div>
+  </article>
+</div>
+<section class="hs-panel mb-3">
+  <header class="hs-list-head">
+    <span>{{ consultation.label }}</span>
+    {% if consultation.paye %}
+      <span class="state state-approuve">Payé{% if consultation.paiement %} · {{ consultation.paiement.cloture_le|date:"d/m/Y" }}{% endif %}</span>
+    {% else %}
+      <span class="state">Mois en cours</span>
+    {% endif %}
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Saisies de {{ consultation.label }}</caption>
+      <thead>
+        <tr><th>Date</th><th>Matricule</th><th>Agent</th><th>Service</th><th>Heures</th><th>Durée</th><th>Montant</th></tr>
+      </thead>
+      <tbody>
+        {% for item in consultation.lignes %}
+          <tr>
+            <td>{{ item.date_travail|date:"d/m/Y" }}</td>
+            <td>{{ item.agent.matricule }}</td>
+            <td><strong class="row-title">{{ item.agent.nom_complet }}</strong></td>
+            <td><span class="code-chip">{{ item.agent.service.code }}</span></td>
+            <td>{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}</td>
+            <td>{{ item.duree_minutes|duree }}</td>
+            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7"><i class="bi bi-inbox"></i>Aucune heure supplémentaire pour ce mois.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="hs-panel mb-3">
+  <header class="hs-list-head">
+    <span>Cumul par agent</span>
+    <span>{{ consultation.par_agent|length }} agent{{ consultation.par_agent|length|pluralize }}</span>
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Cumul par agent {{ consultation.label }}</caption>
+      <thead>
+        <tr><th>Matricule</th><th>Agent</th><th>Service</th><th>Saisies</th><th>Durée</th><th>Montant</th></tr>
+      </thead>
+      <tbody>
+        {% for row in consultation.par_agent %}
+          <tr>
+            <td>{{ row.agent__matricule }}</td>
+            <td><strong class="row-title">{{ row.nom }}</strong></td>
+            <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
+            <td>{{ row.nombre }}</td>
+            <td>{{ row.minutes|duree }}</td>
+            <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune heure supplémentaire pour ce mois.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+<section class="hs-panel">
+  <header class="hs-list-head">
+    <span>Paies clôturées</span>
+    <span>{{ archives|length }} mois</span>
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Paies clôturées {{ annee }}</caption>
+      <thead>
+        <tr><th>Mois</th><th>Statut</th><th>Clôturé le</th><th>Agents</th><th>Saisies</th><th>Durée</th><th>Montant</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for row in archives %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td><span class="state state-approuve">Payé</span></td>
+            <td>{{ row.paiement.cloture_le|date:"d/m/Y" }}</td>
+            <td>{{ row.paiement.agents }}</td>
+            <td>{{ row.paiement.nombre }}</td>
+            <td>{{ row.duree }}</td>
+            <td>{{ row.paiement.montant|montant }} {{ site_settings.devise }}</td>
+            <td class="row-actions">
+              {% if consultation.mois == row.mois and not consultation.courant %}
+                <a href="{% url 'overtime:payroll' %}">Fermer</a>
+              {% elif consultation.mois != row.mois %}
+                <a href="{% url 'overtime:payroll' %}?mois={{ row.mois }}"><i class="bi bi-eye"></i> Consulter</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8"><i class="bi bi-inbox"></i>Aucune paie clôturée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

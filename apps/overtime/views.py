@@ -9,13 +9,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views import View
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView, FormView, ListView, RedirectView
+from django.views.generic import DetailView, FormView, ListView, RedirectView, TemplateView
 
 from apps.accounts.access import get_profile
 from apps.accounts.mixins import AppPermissionMixin, DENIED, page_size
 from apps.audit.utils import journaliser, model_snapshot
 from apps.overtime.formatting import format_minutes, format_montant
-from apps.overtime.forms import ANNEE_MOIS, AttachmentForm, OvertimeRequestForm, _bornes_mois, _choix_mois
+from apps.overtime.forms import ANNEE_MOIS, AttachmentForm, OvertimeRequestForm, _NOMS_MOIS, _bornes_mois, _choix_mois
 from apps.overtime.models import Attachment, OvertimeRequest, OvertimeType, WorkSchedule
 from apps.overtime.selectors import (
     apply_overtime_filters,
@@ -28,6 +28,12 @@ from apps.overtime.services.calculation import CalculationError, calculer_declar
 from apps.overtime.services.declaration import enregistrer_declaration
 from apps.overtime.validators import validate_uploaded_file
 from apps.workflow.services import WorkflowError, soumettre
+
+
+def _message_verrou(demande, verbe):
+    if demande.payee:
+        return f"Les heures supplémentaires de ce mois sont payées et ne peuvent plus être {verbe}."
+    return f"Une déclaration annulée ne peut plus être {verbe}."
 
 
 def _scoped(user):
@@ -192,7 +198,7 @@ class OvertimeFormView(AppPermissionMixin, FormView):
         if "pk" in kwargs:
             self.object = get_object_or_404(_scoped(request.user), pk=kwargs["pk"])
             if not self.object.editable:
-                messages.warning(request, "Une déclaration annulée ne peut plus être modifiée.")
+                messages.warning(request, _message_verrou(self.object, "modifiée"))
                 return redirect("overtime:detail", pk=self.object.pk)
             if not request.user.has_perm("overtime.change_overtime") and not request.user.is_superuser:
                 messages.warning(request, DENIED)
@@ -210,6 +216,11 @@ class OvertimeFormView(AppPermissionMixin, FormView):
                     jour = datetime.strptime(raw, "%Y-%m-%d").date()
                 except ValueError:
                     jour = None
+                if jour is not None:
+                    from apps.overtime.paiement import mois_est_paye
+
+                    if mois_est_paye(jour.year, jour.month):
+                        jour = None
                 if jour is not None:
                     form.initial["date_travail"] = jour
                     form.initial["mois"] = jour.strftime("%Y-%m")
@@ -318,7 +329,7 @@ class OvertimeDeleteView(AppPermissionMixin, View):
     def get(self, request, pk):
         demande = self.get_object()
         if not demande.supprimable:
-            messages.warning(request, "Une déclaration annulée ne peut plus être supprimée.")
+            messages.warning(request, _message_verrou(demande, "supprimée"))
             return redirect("overtime:detail", pk=demande.pk)
         from django.shortcuts import render
 
@@ -335,7 +346,7 @@ class OvertimeDeleteView(AppPermissionMixin, View):
     def post(self, request, pk):
         demande = self.get_object()
         if not demande.supprimable:
-            messages.warning(request, "Une déclaration annulée ne peut plus être supprimée.")
+            messages.warning(request, _message_verrou(demande, "supprimée"))
             return redirect("overtime:detail", pk=demande.pk)
         snapshot = model_snapshot(demande)
         object_id = str(demande.pk)
@@ -530,6 +541,15 @@ def preview_calculation(request):
         fin = _parse_time(raw_end)
     except ValueError:
         return JsonResponse({"ok": False, "message": "Indiquez la date et les heures."})
+    from apps.overtime.paiement import mois_est_paye
+
+    if mois_est_paye(jour.year, jour.month):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Ce mois est clôturé. Les heures supplémentaires payées ne peuvent plus être saisies.",
+            }
+        )
     if not str(agent_id).isdigit():
         return JsonResponse({"ok": False, "message": "Sélectionnez un agent."})
     agent = Agent.objects.filter(pk=int(agent_id)).first()
@@ -573,3 +593,120 @@ def _agent_allowed(user, agent):
 
     profile = get_profile(user)
     return profile.agent_id == agent.id
+
+
+class PayrollView(AppPermissionMixin, TemplateView):
+    permission_required = "overtime.view_overtime"
+    template_name = "overtime/paiement.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.overtime.models import PaiementMois
+        from apps.overtime.paiement import mois_est_paye
+        from apps.reports.services import by_agent, report_queryset, report_totals
+
+        context = super().get_context_data(**kwargs)
+        aujourd_hui = timezone.localdate()
+        mois_courant = f"{ANNEE_MOIS}-{aujourd_hui.month:02d}" if aujourd_hui.year == ANNEE_MOIS else ""
+        archives = {
+            f"{item.annee}-{item.mois:02d}": item
+            for item in PaiementMois.objects.filter(annee=ANNEE_MOIS).select_related("cloture_par")
+        }
+        choisi = self.request.GET.get("mois") or mois_courant
+        if choisi not in archives and choisi != mois_courant:
+            choisi = mois_courant
+        consultation = None
+        if choisi:
+            debut, fin = _bornes_mois(choisi)
+            queryset = report_queryset(
+                self.request.user,
+                {"debut": debut, "fin": fin, "statut": ""},
+            )
+            totals = report_totals(queryset)
+            numero = int(choisi[5:7])
+            consultation = {
+                "mois": choisi,
+                "label": f"{_NOMS_MOIS[numero - 1]} {ANNEE_MOIS}",
+                "totaux": totals,
+                "duree": format_minutes(totals["minutes"]),
+                "par_agent": by_agent(queryset),
+                "lignes": list(queryset),
+                "paye": mois_est_paye(ANNEE_MOIS, numero),
+                "paiement": archives.get(choisi),
+                "courant": choisi == mois_courant,
+            }
+        context.update(
+            {
+                "title": "Paiement Heure Sup",
+                "annee": ANNEE_MOIS,
+                "mois_courant": mois_courant,
+                "consultation": consultation,
+                "archives": [
+                    {
+                        "mois": cle,
+                        "label": f"{_NOMS_MOIS[item.mois - 1]} {item.annee}",
+                        "paiement": item,
+                        "duree": format_minutes(item.minutes),
+                    }
+                    for cle, item in sorted(archives.items())
+                ],
+            }
+        )
+        return context
+
+
+class PayrollCloseView(AppPermissionMixin, View):
+    permission_required = "overtime.close_payroll"
+
+    def get(self, request):
+        from django.shortcuts import render
+
+        from apps.overtime.forms import _NOMS_MOIS
+
+        jour = timezone.localdate()
+        if jour.year == ANNEE_MOIS:
+            nom = _NOMS_MOIS[jour.month - 1].lower()
+            liaison = "d'" if nom[:1] in "aeiouàâéèêëîïôùûü" else "de "
+            label = f"{liaison}{nom} {jour.year}"
+        else:
+            label = "du mois en cours"
+        return render(
+            request,
+            "confirm.html",
+            {
+                "title": "Clôturer la paie",
+                "message": (
+                    f"La paie des heures supplémentaires {label} sera clôturée. "
+                    "Les saisies de ce mois seront archivées et ne pourront plus être modifiées."
+                ),
+                "cancel_url": reverse("overtime:payroll"),
+                "confirm_label": "Clôturer la paie",
+                "confirm_class": "btn-primary",
+            },
+        )
+
+    def post(self, request):
+        from apps.overtime.paiement import PaieError, cloturer_paie
+
+        try:
+            paiement = cloturer_paie(request.user)
+        except PaieError as exc:
+            messages.warning(request, exc.message)
+            return redirect("overtime:payroll")
+        journaliser(
+            request=request,
+            action="MODIFICATION",
+            instance=paiement,
+            new_values={
+                "annee": paiement.annee,
+                "mois": paiement.mois,
+                "nombre": paiement.nombre,
+                "montant": str(paiement.montant),
+            },
+        )
+        nom = _NOMS_MOIS[paiement.mois - 1].lower()
+        liaison = "d'" if nom[:1] in "aeiouàâéèêëîïôùûü" else "de "
+        messages.success(
+            request,
+            f"✓ Paie {liaison}{nom} {paiement.annee} clôturée. Les saisies sont archivées.",
+        )
+        return redirect(f"{reverse('overtime:payroll')}?mois={paiement.annee}-{paiement.mois:02d}")

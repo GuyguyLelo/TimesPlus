@@ -20,6 +20,9 @@ def enregistrer_declaration(
 ):
     """Recalcule côté serveur puis enregistre. La durée du client est ignorée."""
     from apps.overtime.models import OvertimeRequest
+    from apps.overtime.paiement import verifier_saisie_ouverte
+
+    verifier_saisie_ouverte(date_travail, existing)
 
     list(
         OvertimeRequest.objects.select_for_update()

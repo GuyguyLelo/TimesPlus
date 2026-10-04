@@ -13,6 +13,66 @@
     }
   }
 
+  var piePalette = [
+    "#007fff", "#ce1021", "#c8960a", "#0b4f8a", "#146c43",
+    "#7a5b00", "#5c6b76", "#9b1c2c", "#1f4e79", "#8a6d00",
+    "#3d4a5c", "#f7d618"
+  ];
+
+  function drawPie(canvas) {
+    var series = readSeries(canvas.getAttribute("data-chart")).filter(function (item) {
+      return Number(item.value) > 0;
+    });
+    var context = canvas.getContext("2d");
+    var width = canvas.clientWidth || 320;
+    var height = canvas.clientHeight || 240;
+    var ratio = window.devicePixelRatio || 1;
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    context.scale(ratio, ratio);
+    context.clearRect(0, 0, width, height);
+    if (!series.length) {
+      context.fillStyle = "#5c6b76";
+      context.font = "14px Segoe UI, sans-serif";
+      context.fillText("Aucune donnée", 8, 24);
+      return;
+    }
+    var total = series.reduce(function (sum, item) {
+      return sum + (Number(item.value) || 0);
+    }, 0) || 1;
+    var legendWidth = Math.min(210, Math.max(120, width * 0.4));
+    var pieArea = Math.max(80, width - legendWidth);
+    var radius = Math.max(28, Math.min(pieArea, height) / 2 - 14);
+    var centerX = pieArea / 2;
+    var centerY = height / 2;
+    var angle = -Math.PI / 2;
+    series.forEach(function (item, index) {
+      var slice = ((Number(item.value) || 0) / total) * Math.PI * 2;
+      context.beginPath();
+      context.moveTo(centerX, centerY);
+      context.arc(centerX, centerY, radius, angle, angle + slice);
+      context.closePath();
+      context.fillStyle = piePalette[index % piePalette.length];
+      context.fill();
+      angle += slice;
+    });
+    context.font = "12px Segoe UI, sans-serif";
+    var row = 18;
+    var legendTop = Math.max(8, (height - series.length * row) / 2);
+    series.forEach(function (item, index) {
+      var y = legendTop + index * row;
+      var part = Math.round(((Number(item.value) || 0) / total) * 100);
+      var text = String(item.label || "") + " · " + part + " %";
+      context.fillStyle = piePalette[index % piePalette.length];
+      context.fillRect(pieArea, y, 10, 10);
+      context.fillStyle = "#1f2933";
+      while (text.length > 1 && context.measureText(text).width > legendWidth - 22) {
+        text = text.slice(0, -2) + "…";
+      }
+      context.fillText(text, pieArea + 16, y + 10);
+    });
+  }
+
   function drawBars(canvas) {
     var series = readSeries(canvas.getAttribute("data-chart"));
     var context = canvas.getContext("2d");
@@ -39,7 +99,8 @@
       var barHeight = Math.max(2, (value / max) * (height - 36));
       var x = gap + index * (barWidth + gap);
       var y = height - 22 - barHeight;
-      context.fillStyle = "#007fff";
+      var tones = { paye: "#007fff", cours: "#c8960a", avenir: "#c5d0dc" };
+      context.fillStyle = tones[item.tone] || "#007fff";
       context.fillRect(x, y, barWidth, barHeight);
       context.fillStyle = "#1f2933";
       context.font = "11px Segoe UI, sans-serif";
@@ -51,7 +112,41 @@
     });
   }
 
-  document.querySelectorAll("canvas[data-chart]").forEach(drawBars);
+  document.querySelectorAll("canvas[data-chart]").forEach(function (canvas) {
+    if (canvas.getAttribute("data-shape") === "cercle") {
+      drawPie(canvas);
+    } else {
+      drawBars(canvas);
+    }
+  });
+
+  document.querySelectorAll("table.table").forEach(function (table) {
+    var heads = Array.prototype.map.call(table.querySelectorAll("thead th"), function (cell) {
+      return (cell.textContent || "").replace(/\s+/g, " ").trim();
+    });
+    table.querySelectorAll("tbody tr").forEach(function (row) {
+      Array.prototype.forEach.call(row.children, function (cell, index) {
+        if (cell.tagName !== "TD" || cell.hasAttribute("colspan")) {
+          return;
+        }
+        if (heads[index]) {
+          cell.setAttribute("data-label", heads[index]);
+        }
+      });
+    });
+  });
+  document.documentElement.classList.add("lists-ready");
+
+  document.querySelectorAll(".nav-branch").forEach(function (branch) {
+    var parent = branch.querySelector(".nav-parent");
+    if (!parent) {
+      return;
+    }
+    parent.addEventListener("click", function () {
+      var open = branch.classList.toggle("is-open");
+      parent.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
 
   var form = document.getElementById("declaration-form");
   if (!form) {

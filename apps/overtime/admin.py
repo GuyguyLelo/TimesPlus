@@ -8,6 +8,7 @@ from apps.overtime.models import (
     OvertimeRequest,
     OvertimeRule,
     OvertimeType,
+    PaiementMois,
     WorkSchedule,
 )
 
@@ -90,6 +91,23 @@ class OvertimeRequestAdmin(AuditAdminMixin, admin.ModelAdmin):
         if obj and obj.statut == OvertimeRequest.Statut.APPROUVE:
             return [field.name for field in obj._meta.fields]
         return fields
+
+
+@admin.register(PaiementMois)
+class PaiementMoisAdmin(admin.ModelAdmin):
+    list_display = ("annee", "mois", "agents", "nombre", "minutes", "montant", "cloture_le", "cloture_par")
+    list_filter = ("annee",)
+    ordering = ("-annee", "-mois")
+    list_per_page = 20
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Attachment)

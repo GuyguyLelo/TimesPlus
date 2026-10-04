@@ -97,12 +97,32 @@ def agent_unique(queryset):
     )
 
 
-def historique_par_mois(queryset, annee):
-    """Totaux de chaque mois d'une année, y compris les mois sans saisie."""
+def mois_anterieurs_payes(annee, jour=None):
+    """Mois déjà payés : mois révolus et mois clôturés par la paie."""
+    from apps.overtime.paiement import mois_payes_numeros
+
+    return mois_payes_numeros(annee, jour)
+
+
+def bornes_mois_payes(annee, jour=None):
+    from apps.overtime.forms import _bornes_mois
+
+    mois = mois_anterieurs_payes(annee, jour)
+    if not mois:
+        return None
+    debut, _fin = _bornes_mois(f"{annee}-{mois[0]:02d}")
+    _debut, fin = _bornes_mois(f"{annee}-{mois[-1]:02d}")
+    return debut, fin
+
+
+def historique_par_mois(queryset, annee, mois=None):
+    """Totaux des mois antérieurs déjà payés, y compris ceux sans saisie."""
     from apps.overtime.forms import _NOMS_MOIS, _bornes_mois
 
+    if mois is None:
+        mois = mois_anterieurs_payes(annee)
     rows = []
-    for month in range(1, 13):
+    for month in mois:
         debut, fin = _bornes_mois(f"{annee}-{month:02d}")
         subset = queryset.filter(date_travail__gte=debut, date_travail__lte=fin)
         totals = report_totals(subset)

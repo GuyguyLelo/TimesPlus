@@ -7,7 +7,11 @@
   <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <h1>{{ declaration.date_travail|date:"d/m/Y" }}</h1>
     <div class="d-flex gap-2 flex-wrap">
-      <span class="badge text-bg-{{ declaration.statut|statut_badge }}">{{ declaration.get_statut_display }}</span>
+      {% if declaration.payee %}
+        <span class="state state-approuve">Payé</span>
+      {% else %}
+        <span class="badge text-bg-{{ declaration.statut|statut_badge }}">{{ declaration.get_statut_display }}</span>
+      {% endif %}
       {% if declaration.editable and perms.overtime.change_overtime %}
         <a class="btn btn-outline-primary" href="{% url 'overtime:update' declaration.pk %}">Modifier</a>
       {% endif %}

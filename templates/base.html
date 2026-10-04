@@ -7,7 +7,7 @@
   <title>{% block title %}Tableau de bord{% endblock %} — Heures supplémentaires</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/font/bootstrap-icons.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=36">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=44">
 </head>
 <body>
   <div class="flag-ribbon" aria-hidden="true"></div>
@@ -23,18 +23,15 @@
             <img src="{% static 'img/logo-TimePlus.png' %}" alt="TimePlus — Gérez vos heures supplémentaires">
           </a>
           <a class="{% nav_class '/dashboard/' %}" href="{% url 'dashboard:home' %}"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
-          {% if perms.agents.view_agent or perms.services.view_service or perms.overtime.view_workschedule or perms.overtime.view_holiday %}
+          {% if perms.agents.view_agent %}
             <p class="nav-section">Gestion</p>
-            {% if perms.agents.view_agent %}<a class="{% nav_class '/agents/' '/agents/referentiel/' %}" href="{% url 'agents:list' %}"><i class="bi bi-people"></i> Agents</a>{% endif %}
-            {% if perms.agents.view_agent %}<a class="{% nav_class '/agents/referentiel/' %}" href="{% url 'agents:referentiel' %}"><i class="bi bi-person-badge"></i> Grades et fonctions</a>{% endif %}
-            {% if perms.services.view_service %}<a class="{% nav_class '/services/' %}" href="{% url 'services:list' %}"><i class="bi bi-building"></i> Services</a>{% endif %}
-            {% if perms.overtime.view_workschedule %}<a class="{% nav_class '/horaires/' %}" href="{% url 'overtime:schedules' %}"><i class="bi bi-clock"></i> Horaires</a>{% endif %}
-            {% if perms.overtime.view_holiday %}<a class="{% nav_class '/jours-feries/' %}" href="{% url 'overtime:holidays' %}"><i class="bi bi-calendar-event"></i> Jours fériés</a>{% endif %}
+            <a class="{% nav_class '/agents/' '/agents/referentiel/' %}" href="{% url 'agents:list' %}"><i class="bi bi-people"></i> Agents</a>
           {% endif %}
           {% if perms.overtime.view_overtime %}
             <p class="nav-section">Heures supplémentaires</p>
-            <a class="{% nav_class '/heures/' '/heures/nouvelle/' %}" href="{% url 'overtime:mine' %}"><i class="bi bi-clock-history"></i><span>Liste des Heures supplémentaires</span></a>
+            <a class="{% nav_class '/heures/' '/heures/nouvelle/' '/heures/paiement/' %}" href="{% url 'overtime:mine' %}"><i class="bi bi-clock-history"></i><span>Liste des Heures supplémentaires</span></a>
             {% if perms.overtime.add_overtime %}<a class="{% nav_class '/heures/nouvelle/' %}" href="{% url 'overtime:create' %}"><i class="bi bi-plus-circle"></i> Saisie Heure Sup</a>{% endif %}
+            <a class="{% nav_class '/heures/paiement/' %}" href="{% url 'overtime:payroll' %}"><i class="bi bi-cash-coin"></i> Paiement Heure Sup</a>
           {% endif %}
           {% if perms.reports.view_reports %}
             <p class="nav-section">Rapports</p>
@@ -53,7 +50,20 @@
             {% if perms.overtime.manage_rules %}
               <a class="{% nav_class '/administration/regles/' %}" href="{% url 'overtime:rules' %}"><i class="bi bi-sliders"></i> Règles de calcul</a>
               <a class="{% nav_class '/administration/types/' %}" href="{% url 'overtime:types' %}"><i class="bi bi-tags"></i> Types d'heures</a>
-              <a class="{% nav_class '/administration/parametres/' %}" href="{% url 'settings_app:parameters' %}"><i class="bi bi-gear"></i> Paramètres</a>
+              <div class="nav-branch{% if '/administration/parametres/' in request.path or '/agents/referentiel/' in request.path or '/services/' in request.path or '/horaires/' in request.path or '/jours-feries/' in request.path %} is-open{% endif %}">
+                <button type="button" class="nav-link nav-parent" aria-expanded="{% if '/administration/parametres/' in request.path or '/agents/referentiel/' in request.path or '/services/' in request.path or '/horaires/' in request.path or '/jours-feries/' in request.path %}true{% else %}false{% endif %}" aria-controls="sous-parametres">
+                  <i class="bi bi-gear"></i>
+                  <span>Paramètres</span>
+                  <i class="bi bi-chevron-down nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-sub" id="sous-parametres">
+                  <a class="{% nav_class '/administration/parametres/' %}" href="{% url 'settings_app:parameters' %}"><i class="bi bi-sliders2"></i> Réglages</a>
+                  {% if perms.agents.view_agent %}<a class="{% nav_class '/agents/referentiel/' %}" href="{% url 'agents:referentiel' %}"><i class="bi bi-person-badge"></i> Grades et fonctions</a>{% endif %}
+                  {% if perms.services.view_service %}<a class="{% nav_class '/services/' %}" href="{% url 'services:list' %}"><i class="bi bi-building"></i> Services</a>{% endif %}
+                  {% if perms.overtime.view_workschedule %}<a class="{% nav_class '/horaires/' %}" href="{% url 'overtime:schedules' %}"><i class="bi bi-clock"></i> Horaires</a>{% endif %}
+                  {% if perms.overtime.view_holiday %}<a class="{% nav_class '/jours-feries/' %}" href="{% url 'overtime:holidays' %}"><i class="bi bi-calendar-event"></i> Jours fériés</a>{% endif %}
+                </div>
+              </div>
             {% endif %}
           {% endif %}
           {% if perms.audit.view_audit %}
@@ -101,7 +111,7 @@
     </div>
   </div>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/app.js' %}?v=28"></script>
+  <script src="{% static 'js/app.js' %}?v=33"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

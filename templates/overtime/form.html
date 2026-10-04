@@ -13,6 +13,9 @@
     </header>
     <form method="post" id="declaration-form" data-preview-url="{% url 'overtime:preview' %}" data-agent-url="{% url 'overtime:agent_search' %}" data-exclude="{{ declaration.pk|default:'' }}">
       {% csrf_token %}
+      {% if form.saisie_fermee %}
+        <div class="alert alert-warning" role="alert">Les mois clôturés n'acceptent plus de saisie.</div>
+      {% endif %}
       {% for error in form.non_field_errors %}
         <div class="alert alert-warning" role="alert">{{ error }}</div>
       {% endfor %}
@@ -76,7 +79,7 @@
       </section>
 
       <div class="form-actions">
-        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        {% if not form.saisie_fermee %}<button class="btn btn-primary" type="submit">Enregistrer</button>{% endif %}
         <a class="btn btn-outline-secondary" href="{% url 'overtime:mine' %}">Annuler</a>
       </div>
     </form>

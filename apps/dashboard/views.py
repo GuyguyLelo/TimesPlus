@@ -4,9 +4,12 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from apps.overtime.formatting import format_minutes
-from apps.overtime.models import OvertimeRequest, OvertimeType
-from apps.overtime.selectors import agents_visible, apply_overtime_filters, overtime_for_user
+from apps.overtime.formatting import format_minutes, format_montant
+from apps.overtime.forms import ANNEE_MOIS, _NOMS_MOIS, _bornes_mois, _choix_mois
+from apps.overtime.models import OvertimeRequest, OvertimeType, PaiementMois
+from apps.overtime.paiement import mois_payes_numeros
+from apps.overtime.selectors import overtime_for_user
+from apps.reports.services import by_agent
 from apps.services.selectors import services_for_user
 
 
@@ -21,82 +24,70 @@ def error_404(request, exception):
 def error_500(request):
     return render(request, "500.html", status=500)
 
-MOIS = [
-    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-]
-
-
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
-        year = self.request.GET.get("annee") or str(today.year)
-        if not str(year).isdigit():
-            year = str(today.year)
-        params = self.request.GET.copy()
-        params["debut"] = f"{year}-01-01"
-        params["fin"] = f"{year}-12-31"
-        scoped = overtime_for_user(self.request.user)
-        filtered = apply_overtime_filters(scoped, params)
-        if str(self.request.GET.get("mois") or "").isdigit():
-            filtered = filtered.filter(date_travail__month=int(self.request.GET["mois"]))
+        mois_courant = today.month if today.year == ANNEE_MOIS else 10
+        choisi = (self.request.GET.get("mois") or "").strip()
+        if choisi not in {f"{ANNEE_MOIS}-{month:02d}" for month in range(1, 13)}:
+            choisi = f"{ANNEE_MOIS}-{mois_courant:02d}"
+        numero = int(choisi[5:7])
+        debut, fin = _bornes_mois(choisi)
+        payes = set(mois_payes_numeros(ANNEE_MOIS))
 
-        approved = filtered.filter(statut=OvertimeRequest.Statut.APPROUVE)
-        minutes = approved.aggregate(total=Sum("duree_minutes"))["total"] or 0
-        context["cards"] = {
-            "agents": agents_visible(self.request.user).filter(actif=True).count(),
-            "minutes": minutes,
-            "duree": format_minutes(minutes),
-            "pending": filtered.filter(
-                statut__in=[OvertimeRequest.Statut.SOUMIS, OvertimeRequest.Statut.EN_VALIDATION]
-            ).count(),
-            "approved": filtered.filter(statut=OvertimeRequest.Statut.APPROUVE).count(),
-            "rejected": filtered.filter(statut=OvertimeRequest.Statut.REJETE).count(),
-        }
+        def restreint(queryset):
+            service = self.request.GET.get("service") or ""
+            type_heure = self.request.GET.get("type") or ""
+            if str(service).isdigit():
+                queryset = queryset.filter(agent__service_id=int(service))
+            if str(type_heure).isdigit():
+                queryset = queryset.filter(type_heure_id=int(type_heure))
+            return queryset
 
-        year_approved = scoped.filter(
-            statut=OvertimeRequest.Statut.APPROUVE,
-            date_travail__year=int(year),
+        saisies = restreint(
+            overtime_for_user(self.request.user).filter(statut=OvertimeRequest.Statut.APPROUVE)
         )
-        if str(self.request.GET.get("service") or "").isdigit():
-            year_approved = year_approved.filter(agent__service_id=int(self.request.GET["service"]))
-        monthly = {
-            row["date_travail__month"]: row["total"] or 0
-            for row in year_approved.values("date_travail__month").annotate(total=Sum("duree_minutes"))
-        }
-        context["chart_months"] = [
-            {"label": MOIS[index], "value": int(monthly.get(index + 1, 0))}
-            for index in range(12)
-        ]
-        context["chart_services"] = [
-            {"label": row["agent__service__nom"] or "—", "value": int(row["total"] or 0)}
-            for row in approved.values("agent__service__nom").annotate(total=Sum("duree_minutes")).order_by("-total")[:8]
-        ]
-        context["chart_types"] = [
-            {"label": row["type_heure__libelle"] or "—", "value": int(row["total"] or 0)}
-            for row in approved.values("type_heure__libelle").annotate(total=Sum("duree_minutes")).order_by("-total")
-        ]
-        context["chart_status"] = [
-            {"label": label, "value": count}
-            for label, count in (
-                (dict(OvertimeRequest.Statut.choices).get(row["statut"], row["statut"]), row["total"])
-                for row in filtered.values("statut").annotate(total=Count("id"))
-            )
-        ]
-        context["recent"] = filtered.select_related("agent", "type_heure")[:8]
-        context["services"] = services_for_user(self.request.user)
-        context["types"] = OvertimeType.objects.filter(actif=True)
-        context["statuts"] = OvertimeRequest.Statut.choices
-        context["years"] = range(today.year - 3, today.year + 2)
-        context["months"] = list(enumerate(MOIS, start=1))
-        context["selected"] = {
-            "annee": int(year),
-            "mois": self.request.GET.get("mois", ""),
-            "service": self.request.GET.get("service", ""),
-            "statut": self.request.GET.get("statut", ""),
-            "type": self.request.GET.get("type", ""),
-        }
+        du_mois = saisies.filter(date_travail__gte=debut, date_travail__lte=fin)
+        totaux = du_mois.aggregate(
+            minutes=Sum("duree_minutes"),
+            montant=Sum("montant_estime"),
+            nombre=Count("id"),
+        )
+        paiement = PaiementMois.objects.filter(annee=ANNEE_MOIS, mois=numero).first()
+        context.update(
+            {
+                "title": "Tableau de bord",
+                "periode": f"{_NOMS_MOIS[numero - 1]} {ANNEE_MOIS}",
+                "mois_valeur": choisi,
+                "cards": {
+                    "agents": du_mois.order_by().values("agent_id").distinct().count(),
+                    "saisies": totaux["nombre"] or 0,
+                    "duree": format_minutes(totaux["minutes"] or 0),
+                    "montant": format_montant(totaux["montant"] or 0),
+                    "paye": numero in payes,
+                    "cloture": paiement.cloture_le if paiement else None,
+                },
+                "chart_montants": [
+                    {"label": row["nom"], "value": float(row["montant"] or 0)}
+                    for row in by_agent(du_mois)
+                ],
+                "chart_types": [
+                    {"label": row["type_heure__libelle"] or "—", "value": float(row["total"] or 0)}
+                    for row in du_mois.values("type_heure__libelle")
+                    .annotate(total=Sum("montant_estime"))
+                    .order_by("-total")
+                ],
+                "services": services_for_user(self.request.user),
+                "types": OvertimeType.objects.filter(actif=True),
+                "mois_choices": _choix_mois({ANNEE_MOIS}),
+                "selected": {
+                    "mois": choisi,
+                    "service": self.request.GET.get("service", ""),
+                    "type": self.request.GET.get("type", ""),
+                },
+            }
+        )
         return context

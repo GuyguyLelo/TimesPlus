@@ -324,12 +324,18 @@ class OvertimeRequest(models.Model):
         return libelle_motif(self.motif)
 
     @property
+    def payee(self):
+        from apps.overtime.paiement import mois_est_paye
+
+        return mois_est_paye(self.date_travail.year, self.date_travail.month)
+
+    @property
     def editable(self):
-        return self.statut != self.Statut.ANNULE
+        return self.statut != self.Statut.ANNULE and not self.payee
 
     @property
     def supprimable(self):
-        return self.statut != self.Statut.ANNULE
+        return self.statut != self.Statut.ANNULE and not self.payee
 
     @property
     def soumissible(self):
@@ -402,6 +408,40 @@ class ListeJournaliere(models.Model):
 
     def __str__(self):
         return f"{self.service.code} — {self.date:%d/%m/%Y}"
+
+
+class PaiementMois(models.Model):
+    """Clôture de la paie des heures supplémentaires d'un mois. Les saisies deviennent archivées."""
+
+    annee = models.PositiveIntegerField("année")
+    mois = models.PositiveSmallIntegerField("mois")
+    agents = models.PositiveIntegerField("agents", default=0)
+    nombre = models.PositiveIntegerField("saisies", default=0)
+    minutes = models.PositiveIntegerField("durée (minutes)", default=0)
+    montant = models.DecimalField("montant", max_digits=14, decimal_places=2, default=0)
+    cloture_le = models.DateTimeField("clôturé le", auto_now_add=True)
+    cloture_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="clôturé par",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="paies_cloturees",
+    )
+
+    class Meta:
+        verbose_name = "paiement des heures supplémentaires"
+        verbose_name_plural = "paiements des heures supplémentaires"
+        ordering = ["-annee", "-mois"]
+        constraints = [
+            models.UniqueConstraint(fields=["annee", "mois"], name="paiement_mois_unique"),
+        ]
+        permissions = [
+            ("close_payroll", "Peut clôturer la paie des heures supplémentaires"),
+        ]
+
+    def __str__(self):
+        return f"{self.mois:02d}/{self.annee}"
 
 
 class SignatureListe(models.Model):

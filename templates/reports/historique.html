@@ -8,7 +8,7 @@
     <h1>{{ title }}</h1>
     <p>{{ periode }}</p>
   </div>
-  {% if perms.reports.export_reports %}
+  {% if querystring and perms.reports.export_reports %}
     <div class="hs-tools">
       <a class="btn btn-outline-primary" href="{% url 'reports:excel' %}?{{ querystring }}"><i class="bi bi-file-earmark-excel"></i> Excel</a>
       <a class="btn btn-primary" href="{% url 'reports:pdf' %}?kind=HISTORIQUE&{{ querystring }}"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
@@ -35,26 +35,67 @@
     </div>
   </article>
 </div>
+{% if consultation %}
 <section class="hs-panel mb-3">
   <header class="hs-list-head">
-    <span>Mois de {{ annee }}</span>
-    <span>12 mois</span>
+    <span>{{ consultation.label }}</span>
+    <span class="state state-approuve">Payé</span>
   </header>
   <div class="table-responsive">
     <table class="table mb-0">
-      <caption class="visually-hidden">Historique mensuel {{ annee }}</caption>
+      <caption class="visually-hidden">Données payées de {{ consultation.label }}</caption>
       <thead>
-        <tr><th>Mois</th><th>Agents</th><th>Saisies</th><th>Durée</th><th>Montant</th></tr>
+        <tr><th>Date</th><th>Matricule</th><th>Agent</th><th>Service</th><th>Heures</th><th>Durée</th><th>Montant</th></tr>
+      </thead>
+      <tbody>
+        {% for item in consultation.lignes %}
+          <tr>
+            <td>{{ item.date_travail|date:"d/m/Y" }}</td>
+            <td>{{ item.agent.matricule }}</td>
+            <td><strong class="row-title">{{ item.agent.nom_complet }}</strong></td>
+            <td><span class="code-chip">{{ item.agent.service.code }}</span></td>
+            <td>{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}</td>
+            <td>{{ item.duree_minutes|duree }}</td>
+            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7"><i class="bi bi-inbox"></i>Aucune heure supplémentaire payée pour ce mois.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+<section class="hs-panel mb-3">
+  <header class="hs-list-head">
+    <span>Mois déjà payés</span>
+    <span>{{ mois_rows|length }} mois</span>
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Mois antérieurs déjà payés {{ annee }}</caption>
+      <thead>
+        <tr><th>Mois</th><th>Statut</th><th>Agents</th><th>Saisies</th><th>Durée</th><th>Montant</th><th></th></tr>
       </thead>
       <tbody>
         {% for row in mois_rows %}
           <tr>
-            <td><a href="{% url 'reports:monthly' %}?mois={{ row.mois }}">{{ row.label }}</a></td>
+            <td>{{ row.label }}</td>
+            <td><span class="state state-approuve">Payé</span></td>
             <td>{{ row.agents }}</td>
             <td>{{ row.nombre }}</td>
             <td>{{ row.minutes|duree }}</td>
             <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+            <td class="row-actions">
+              {% if mois_choisi == row.mois %}
+                <a href="{% url 'reports:historical' %}">Fermer</a>
+              {% else %}
+                <a href="{% url 'reports:historical' %}?mois={{ row.mois }}"><i class="bi bi-eye"></i> Consulter</a>
+              {% endif %}
+            </td>
           </tr>
+        {% empty %}
+          <tr><td colspan="7"><i class="bi bi-inbox"></i>Aucun mois antérieur déjà payé.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -62,7 +103,7 @@
 </section>
 <section class="hs-panel">
   <header class="hs-list-head">
-    <span>Cumul par agent</span>
+    <span>Cumul des mois payés</span>
     <span>{{ par_agent|length }} agent{{ par_agent|length|pluralize }}</span>
   </header>
   <div class="table-responsive">

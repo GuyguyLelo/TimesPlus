@@ -56,6 +56,7 @@ _OVERTIME_CUSTOM = (
     "overtime.reject_overtime",
     "overtime.view_all_overtime",
     "overtime.validate_all_overtime",
+    "overtime.close_payroll",
 )
 
 _OVERTIME_MODEL = (

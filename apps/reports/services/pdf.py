@@ -581,22 +581,20 @@ def _rapport_historique(queryset, *, site, numero, periode, genere_le):
     styles = _styled()
     page = landscape(A4)
     width = page[0] - 28 * mm
-    annee = periode.replace("Année ", "") if periode.startswith("Année ") else ""
-    try:
-        annee = int(annee)
-    except ValueError:
-        annee = None
+    from apps.overtime.forms import ANNEE_MOIS
+
+    annee = ANNEE_MOIS
     story = _opening(
         styles,
         width,
         title="RAPPORT HISTORIQUE DES HEURES SUPPLÉMENTAIRES",
         caption="NUMÉRO DU RAPPORT",
-        notice="Historique validé. Ce document reprend les heures supplémentaires de chaque mois de l'année.",
+        notice="Historique des mois antérieurs déjà payés.",
         site=site,
         numero=numero,
         genere_le=genere_le,
     )
-    mois_rows = historique_par_mois(queryset, annee) if annee else []
+    mois_rows = historique_par_mois(queryset, annee)
     if mois_rows:
         story.append(_data_table(
             styles,
@@ -638,7 +636,7 @@ def _rapport_historique(queryset, *, site, numero, periode, genere_le):
             right_columns={3, 4, 5},
         ))
     else:
-        story.append(_rich("Aucune heure supplémentaire pour cette année.", styles["empty"]))
+        story.append(_rich("Aucun mois antérieur déjà payé.", styles["empty"]))
     total = sum((item.montant_estime for item in queryset), 0)
     duree = sum(item.duree_minutes for item in queryset)
     story.append(Spacer(1, 4 * mm))

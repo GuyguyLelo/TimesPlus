@@ -18,10 +18,12 @@ from apps.reports.models import GeneratedReport, ReportSequence
 from apps.agents.models import Agent
 from apps.reports.services import (
     agent_unique,
+    bornes_mois_payes,
     by_agent,
     by_service,
     by_type,
     historique_par_mois,
+    mois_anterieurs_payes,
     parse_report_params,
     report_queryset,
     report_totals,
@@ -203,23 +205,44 @@ class HistoricalReportView(AppPermissionMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         annee = ANNEE_MOIS
-        params = {
-            "debut": date(annee, 1, 1),
-            "fin": date(annee, 12, 31),
-            "statut": "",
-        }
-        queryset = report_queryset(self.request.user, params)
+        payes = mois_anterieurs_payes(annee)
+        bornes = bornes_mois_payes(annee)
+        if bornes:
+            params = {"debut": bornes[0], "fin": bornes[1], "statut": ""}
+            queryset = report_queryset(self.request.user, params)
+            querystring = f"debut={bornes[0].isoformat()}&fin={bornes[1].isoformat()}"
+        else:
+            queryset = report_queryset(self.request.user, {"statut": ""}).none()
+            querystring = ""
+        mois_rows = historique_par_mois(queryset, annee, payes)
+        choisi = self.request.GET.get("mois") or ""
+        mois_choisi = choisi if any(row["mois"] == choisi for row in mois_rows) else ""
+        consultation = None
+        if mois_choisi:
+            debut, fin = _bornes_mois(mois_choisi)
+            detail = queryset.filter(date_travail__gte=debut, date_travail__lte=fin)
+            totaux_mois = report_totals(detail)
+            consultation = {
+                "mois": mois_choisi,
+                "label": next(row["label"] for row in mois_rows if row["mois"] == mois_choisi),
+                "totaux": totaux_mois,
+                "duree": format_minutes(totaux_mois["minutes"]),
+                "par_agent": by_agent(detail),
+                "lignes": list(detail),
+            }
         totals = report_totals(queryset)
         context.update(
             {
                 "title": "Rapport historique",
                 "annee": annee,
-                "periode": f"Année {annee}",
+                "periode": "Mois antérieurs déjà payés",
                 "totaux": totals,
                 "duree": format_minutes(totals["minutes"]),
-                "mois_rows": historique_par_mois(queryset, annee),
+                "mois_rows": mois_rows,
                 "par_agent": by_agent(queryset),
-                "querystring": f"debut={annee}-01-01&fin={annee}-12-31",
+                "querystring": querystring,
+                "mois_choisi": mois_choisi,
+                "consultation": consultation,
             }
         )
         return context
@@ -278,8 +301,12 @@ class ExportPdfView(AppPermissionMixin, View):
             mois="" if kind == "HISTORIQUE" else (request.GET.get("mois") or ""),
         )
         if kind == "HISTORIQUE":
-            params["debut"] = date(ANNEE_MOIS, 1, 1)
-            params["fin"] = date(ANNEE_MOIS, 12, 31)
+            bornes = bornes_mois_payes(ANNEE_MOIS)
+            if bornes:
+                params["debut"], params["fin"] = bornes
+            else:
+                params["debut"] = date(ANNEE_MOIS, 1, 1)
+                params["fin"] = date(ANNEE_MOIS, 1, 1) - timedelta(days=1)
         if kind == "INDIVIDUEL" and not params.get("agent"):
             messages.warning(request, "Choisissez un agent pour le rapport individuel.")
             return render(request, "reports/preview.html", _empty_context(request, form, kind))

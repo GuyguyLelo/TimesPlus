@@ -100,7 +100,11 @@
           <span class="code-chip">{{ item.type_heure.code }}</span>
         </div>
         <div class="hs-side">
-          <span class="state state-{{ item.statut|lower }}">{{ item.get_statut_display }}</span>
+          {% if item.payee %}
+            <span class="state state-approuve">Payé</span>
+          {% else %}
+            <span class="state state-{{ item.statut|lower }}">{{ item.get_statut_display }}</span>
+          {% endif %}
           <span class="row-actions">
             <a href="{% url 'overtime:detail' item.pk %}"><i class="bi bi-eye"></i> Voir</a>
             {% if item.editable and perms.overtime.change_overtime %}

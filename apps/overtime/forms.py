@@ -74,26 +74,38 @@ class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
                 self.agent_label = str(chosen)
                 self.agent_carte = fiche_agent(chosen)
         today = timezone.localdate()
+        from apps.overtime.paiement import mois_est_paye, mois_ouverts
+
+        ouverts = mois_ouverts(ANNEE_MOIS)
+        self.saisie_fermee = not ouverts
+        choix = [
+            (f"{ANNEE_MOIS}-{month:02d}", f"{_NOMS_MOIS[month - 1]} {ANNEE_MOIS}")
+            for month in ouverts
+        ]
         if self.instance.pk and self.instance.date_travail:
             reference = self.instance.date_travail
         else:
-            reference = today
+            reference = _prochaine_date_ouverte(today, ouverts)
             if not self.is_bound:
-                self.initial["date_travail"] = today
+                self.initial["date_travail"] = reference
         self.fields["date_travail"].widget.attrs["data-today"] = today.isoformat()
         mois = reference.strftime("%Y-%m")
         if self.is_bound and self.data.get("mois"):
             mois = self.data.get("mois")
+        elif mois_est_paye(reference.year, reference.month) and choix:
+            mois = choix[0][0]
+            if not self.is_bound and not self.instance.pk:
+                self.initial["date_travail"] = _bornes_mois(mois)[0]
         try:
             start, end = _bornes_mois(mois)
         except ValueError:
-            mois = reference.strftime("%Y-%m")
-            start, end = _bornes_mois(mois)
+            mois = choix[0][0] if choix else reference.strftime("%Y-%m")
+            start, end = _bornes_mois(mois) if choix else (reference, reference)
         self.fields["mois"] = forms.ChoiceField(
             label="Mois",
             required=False,
-            choices=_choix_mois({ANNEE_MOIS}),
-            initial=mois,
+            choices=choix or [("", "Aucun mois ouvert")],
+            initial=mois if not self.saisie_fermee else "",
         )
         self.fields["date_travail"].widget.attrs["min"] = start.isoformat()
         self.fields["date_travail"].widget.attrs["max"] = end.isoformat()
@@ -134,6 +146,18 @@ class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
             else:
                 if not start <= jour <= end:
                     self.add_error("date_travail", "La date doit appartenir au mois sélectionné.")
+        if self.saisie_fermee or (mois and mois not in dict(self.fields["mois"].choices)):
+            self.add_error("mois", "Ce mois est clôturé. Aucune saisie n'est autorisée.")
+            return cleaned
+        if jour is not None:
+            from apps.overtime.paiement import mois_est_paye
+
+            if mois_est_paye(jour.year, jour.month):
+                self.add_error(
+                    "date_travail",
+                    "Ce mois est clôturé. Les heures supplémentaires payées ne peuvent plus être saisies.",
+                )
+                return cleaned
         if not agent or not jour or not debut or not fin:
             return cleaned
         if not can_view_all(self.user) and not self.user.is_superuser:
@@ -168,6 +192,17 @@ _NOMS_MOIS = (
     "Novembre",
     "Décembre",
 )
+
+
+def _prochaine_date_ouverte(jour, ouverts):
+    """Première date encore saisissable, à partir du jour courant."""
+    if jour.year == ANNEE_MOIS and jour.month in ouverts:
+        return jour
+    suivants = [month for month in ouverts if jour.year < ANNEE_MOIS or month >= jour.month]
+    month = suivants[0] if suivants else (ouverts[0] if ouverts else jour.month)
+    if month == jour.month and jour.year == ANNEE_MOIS:
+        return jour
+    return jour.replace(year=ANNEE_MOIS, month=month, day=1)
 
 
 def _choix_mois(annees):
