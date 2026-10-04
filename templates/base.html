@@ -1,0 +1,107 @@
+{% load static ui %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Tableau de bord{% endblock %} — Heures supplémentaires</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/font/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=36">
+</head>
+<body>
+  <div class="flag-ribbon" aria-hidden="true"></div>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div class="app-shell">
+    <aside class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="sidebar">
+      <div class="offcanvas-header">
+        <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Fermer le menu"></button>
+      </div>
+      <div class="offcanvas-body p-0">
+        <nav aria-label="Menu principal">
+          <a class="sidebar-logo" href="{% url 'dashboard:home' %}">
+            <img src="{% static 'img/logo-TimePlus.png' %}" alt="TimePlus — Gérez vos heures supplémentaires">
+          </a>
+          <a class="{% nav_class '/dashboard/' %}" href="{% url 'dashboard:home' %}"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
+          {% if perms.agents.view_agent or perms.services.view_service or perms.overtime.view_workschedule or perms.overtime.view_holiday %}
+            <p class="nav-section">Gestion</p>
+            {% if perms.agents.view_agent %}<a class="{% nav_class '/agents/' '/agents/referentiel/' %}" href="{% url 'agents:list' %}"><i class="bi bi-people"></i> Agents</a>{% endif %}
+            {% if perms.agents.view_agent %}<a class="{% nav_class '/agents/referentiel/' %}" href="{% url 'agents:referentiel' %}"><i class="bi bi-person-badge"></i> Grades et fonctions</a>{% endif %}
+            {% if perms.services.view_service %}<a class="{% nav_class '/services/' %}" href="{% url 'services:list' %}"><i class="bi bi-building"></i> Services</a>{% endif %}
+            {% if perms.overtime.view_workschedule %}<a class="{% nav_class '/horaires/' %}" href="{% url 'overtime:schedules' %}"><i class="bi bi-clock"></i> Horaires</a>{% endif %}
+            {% if perms.overtime.view_holiday %}<a class="{% nav_class '/jours-feries/' %}" href="{% url 'overtime:holidays' %}"><i class="bi bi-calendar-event"></i> Jours fériés</a>{% endif %}
+          {% endif %}
+          {% if perms.overtime.view_overtime %}
+            <p class="nav-section">Heures supplémentaires</p>
+            <a class="{% nav_class '/heures/' '/heures/nouvelle/' %}" href="{% url 'overtime:mine' %}"><i class="bi bi-clock-history"></i><span>Liste des Heures supplémentaires</span></a>
+            {% if perms.overtime.add_overtime %}<a class="{% nav_class '/heures/nouvelle/' %}" href="{% url 'overtime:create' %}"><i class="bi bi-plus-circle"></i> Saisie Heure Sup</a>{% endif %}
+          {% endif %}
+          {% if perms.reports.view_reports %}
+            <p class="nav-section">Rapports</p>
+            <a class="{% nav_class '/rapports/mensuel/' %}" href="{% url 'reports:monthly' %}"><i class="bi bi-calendar3"></i> Rapport mensuel</a>
+            <a class="{% nav_class '/rapports/historique/' %}" href="{% url 'reports:historical' %}"><i class="bi bi-clock-history"></i> Rapport historique</a>
+            {% if perms.reports.export_reports %}
+              <a class="{% nav_class '/rapports/' '/rapports/mensuel/' '/rapports/historique/' %}" href="{% url 'reports:hub' %}"><i class="bi bi-file-earmark-arrow-down"></i> Exports</a>
+            {% endif %}
+          {% endif %}
+          {% if perms.accounts.manage_users or perms.overtime.manage_rules %}
+            <p class="nav-section">Administration</p>
+            {% if perms.accounts.manage_users %}
+              <a class="{% nav_class '/administration/utilisateurs/' %}" href="{% url 'accounts:users' %}"><i class="bi bi-person-gear"></i> Utilisateurs</a>
+              <a class="{% nav_class '/administration/groupes/' %}" href="{% url 'accounts:groups' %}"><i class="bi bi-diagram-3"></i> Groupes</a>
+            {% endif %}
+            {% if perms.overtime.manage_rules %}
+              <a class="{% nav_class '/administration/regles/' %}" href="{% url 'overtime:rules' %}"><i class="bi bi-sliders"></i> Règles de calcul</a>
+              <a class="{% nav_class '/administration/types/' %}" href="{% url 'overtime:types' %}"><i class="bi bi-tags"></i> Types d'heures</a>
+              <a class="{% nav_class '/administration/parametres/' %}" href="{% url 'settings_app:parameters' %}"><i class="bi bi-gear"></i> Paramètres</a>
+            {% endif %}
+          {% endif %}
+          {% if perms.audit.view_audit %}
+            <p class="nav-section">Audit</p>
+            <a class="{% nav_class '/audit/' %}" href="{% url 'audit:list' %}"><i class="bi bi-journal-text"></i> Journal des opérations</a>
+          {% endif %}
+        </nav>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="app-topbar">
+        <button class="topbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Ouvrir le menu">
+          <i class="bi bi-list"></i>
+        </button>
+        <a class="topbar-brand" href="{% url 'dashboard:home' %}">
+          <img class="topbar-logo" src="{% static 'img/logo-dgtcp.png' %}" alt="{{ site_settings.nom_administration|default:'Direction Générale du Trésor et de la Comptabilité Publique' }}">
+        </a>
+        <div class="topbar-actions">
+          <div class="user-chip">
+            <span class="user-avatar" aria-hidden="true">{{ request.user.username|slice:":1"|upper }}</span>
+            <span class="user-meta">
+              <strong>{{ request.user.get_full_name|default:request.user.get_username }}</strong>
+              <span>{{ site_settings.sigle|default:"DGTCP" }}</span>
+            </span>
+          </div>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="topbar-logout" type="submit"><i class="bi bi-box-arrow-right"></i> <span>Déconnexion</span></button>
+          </form>
+        </div>
+      </header>
+      <main id="contenu" class="app-content">
+        {% if messages %}
+          <div class="mb-3" aria-live="polite">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/app.js' %}?v=28"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

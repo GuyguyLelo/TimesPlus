@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card form-card">
+  <div class="card-body">
+    <h1 class="h4">{{ title }}</h1>
+    <p>{{ message }}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn {{ confirm_class|default:'btn-danger' }}" type="submit">{{ confirm_label|default:"Confirmer" }}</button>
+      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Annuler</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

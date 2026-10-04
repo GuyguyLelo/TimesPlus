@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+  <h1 class="h4">Accès refusé</h1>
+  <p>⚠ Vous n'êtes pas autorisé à effectuer cette opération.</p>
+  <a class="btn btn-primary" href="{% url 'dashboard:home' %}">Retour au tableau de bord</a>
+</div></div>
+{% endblock %}

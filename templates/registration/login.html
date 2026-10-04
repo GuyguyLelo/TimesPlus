@@ -1,0 +1,48 @@
+{% extends "registration/auth_base.html" %}
+{% load static %}
+{% block title %}Connexion{% endblock %}
+{% block auth %}
+<section class="auth-card">
+  <img class="auth-logo" src="{% static 'img/logo-dgtcp.png' %}" alt="Direction Générale du Trésor et de la Comptabilité Publique, Ministère des Finances, République démocratique du Congo">
+  <h1 class="auth-title">Connexion</h1>
+  <p class="auth-lead">Gestion des heures supplémentaires</p>
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">Identifiant ou mot de passe incorrect.</div>
+  {% endif %}
+  <form class="auth-form" method="post" novalidate>
+    {% csrf_token %}
+    <div class="auth-field">
+      <label class="form-label" for="id_username">Identifiant</label>
+      <input type="text" name="username" id="id_username" class="form-control" autocomplete="username" required autofocus placeholder="Votre identifiant" value="{{ form.username.value|default:'' }}">
+    </div>
+    <div class="auth-field">
+      <label class="form-label" for="id_password">Mot de passe</label>
+      <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required placeholder="Votre mot de passe">
+    </div>
+    <button class="btn btn-primary w-100" type="submit">Se connecter</button>
+  </form>
+  <p class="auth-forgot"><a href="{% url 'password_reset' %}">Mot de passe oublié</a></p>
+  {% if demo_accounts %}
+    <div class="demo-accounts">
+      <p class="demo-accounts-title">Comptes de démonstration</p>
+      <div class="demo-accounts-list">
+        {% for account in demo_accounts %}
+          <button type="button" class="demo-account" data-username="{{ account.username }}" data-password="{{ account.password }}">
+            <strong>{{ account.username }}</strong>
+            <span>{{ account.role }}</span>
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+    <script>
+      document.querySelectorAll(".demo-account").forEach(function (button) {
+        button.addEventListener("click", function () {
+          document.getElementById("id_username").value = button.getAttribute("data-username");
+          document.getElementById("id_password").value = button.getAttribute("data-password");
+          document.querySelector(".auth-card form").requestSubmit();
+        });
+      });
+    </script>
+  {% endif %}
+</section>
+{% endblock %}

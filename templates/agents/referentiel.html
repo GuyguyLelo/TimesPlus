@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Grades et fonctions{% endblock %}
+{% block content %}
+<div class="page-intro">
+  <h1>Grades et fonctions</h1>
+  <p>Référentiel de l'administration publique de la République démocratique du Congo, proposé lors de l'enregistrement d'un agent.</p>
+</div>
+
+<div class="ref-layout">
+  <section class="card ref-panel">
+    <header class="ref-head">
+      <h2>Grades</h2>
+      <p>Loi n° 16/013 du 15 juillet 2016, articles 17 et 18. Pour les catégories B et C, l'échelon 2 est le plus élevé : le passage se fait de l'échelon 1 vers l'échelon 2.</p>
+    </header>
+    {% regroup grades by categorie as grade_groups %}
+    {% for group in grade_groups %}
+      <h3 class="ref-group cat-{{ group.grouper }}">
+        <span class="cat-mark">{{ group.grouper }}</span>
+        {{ group.list.0.get_categorie_display }}
+      </h3>
+      <ul class="ref-list">
+        {% for item in group.list %}
+          <li>
+            <strong>{{ item.libelle }}</strong>
+            {% if item.echelon %}<span class="echelon echelon-{{ item.echelon }}">Échelon {{ item.echelon }}</span>{% else %}<span class="echelon echelon-none">Sans échelon</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% empty %}
+      <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun grade.</p>
+    {% endfor %}
+  </section>
+
+  <section class="card ref-panel">
+    <header class="ref-head">
+      <h2>Fonctions</h2>
+      <p>Fonctions de commandement, structures standards du décret n° 15/043 du 28 décembre 2015, et emplois de la loi n° 16/013. Le grade peut différer de la fonction exercée, notamment en intérim.</p>
+    </header>
+    {% regroup fonctions by famille as fonction_groups %}
+    {% for group in fonction_groups %}
+      <h3 class="ref-group fam-{{ group.grouper }}">
+        <span class="cat-mark"><i class="bi bi-bookmark"></i></span>
+        {{ group.list.0.get_famille_display }}
+      </h3>
+      <ul class="ref-list">
+        {% for item in group.list %}
+          <li><strong>{{ item.libelle }}</strong></li>
+        {% endfor %}
+      </ul>
+    {% empty %}
+      <p class="ref-empty"><i class="bi bi-inbox"></i>Aucune fonction.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

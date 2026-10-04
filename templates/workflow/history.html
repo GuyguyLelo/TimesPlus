@@ -1,0 +1,21 @@
+{% extends "workflow/queue.html" %}
+{% load ui %}
+{% block title %}Historique de validation{% endblock %}
+{% block content %}
+<h1 class="h3">Historique de mes décisions</h1>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead><tr><th>Date</th><th>Agent</th><th>Durée</th><th>Statut</th><th></th></tr></thead>
+  <tbody>
+    {% for item in declarations %}
+      <tr>
+        <td>{{ item.date_travail|date:"d/m/Y" }}</td>
+        <td>{{ item.agent.nom_complet }}</td>
+        <td>{{ item.duree_minutes|duree }}</td>
+        <td>{{ item.get_statut_display }}</td>
+        <td class="row-actions"><a href="{% url 'workflow:detail' item.pk %}"><i class="bi bi-eye"></i> Voir</a></td>
+      </tr>
+    {% empty %}<tr><td colspan="5"><i class="bi bi-inbox"></i>Aucune décision enregistrée.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

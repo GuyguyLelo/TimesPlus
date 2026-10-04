@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Groupes{% endblock %}
+{% block content %}
+<h1 class="h3">Groupes</h1>
+<p class="text-secondary">La matrice des rôles est réappliquée lors des migrations depuis le module des permissions.</p>
+<div class="card"><table class="table mb-0">
+  <thead><tr><th>Groupe</th><th>Permissions</th><th></th></tr></thead>
+  <tbody>
+    {% for groupe in groupes %}
+      <tr>
+        <td><span class="code-chip">{{ groupe.name }}</span></td>
+        <td>{{ groupe.permissions.count }}</td>
+        <td class="row-actions"><a href="{% url 'accounts:group_detail' groupe.pk %}"><i class="bi bi-eye"></i> Consulter</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Règles de calcul{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h1 class="h3">Règles de calcul</h1>
+  <a class="btn btn-primary" href="{% url 'overtime:rule_create' %}">Nouvelle règle</a>
+</div>
+<p class="text-secondary">La priorité la plus petite est examinée en premier. Les coefficients ci-dessous sont ceux saisis par l'administration.</p>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead><tr><th>Priorité</th><th>Nom</th><th>Type</th><th>Plage</th><th>Week-end</th><th>Férié</th><th>Coefficient</th><th>Actif</th><th></th></tr></thead>
+  <tbody>
+    {% for item in regles %}
+      <tr>
+        <td>{{ item.priorite }}</td>
+        <td>{{ item.nom }}</td>
+        <td><span class="code-chip">{{ item.type_heure.code }}</span></td>
+        <td>{% if item.heure_debut %}{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}{% else %}Journée{% endif %}</td>
+        <td>{% if item.applicable_weekend %}<span class="state state-on">Oui</span>{% else %}<span class="state state-off">Non</span>{% endif %}</td>
+        <td>{% if item.applicable_ferie %}<span class="state state-on">Oui</span>{% else %}<span class="state state-off">Non</span>{% endif %}</td>
+        <td><span class="coef">{{ item.coefficient }}</span></td>
+        <td>{% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}</td>
+        <td class="row-actions"><a href="{% url 'overtime:rule_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a></td>
+      </tr>
+    {% empty %}<tr><td colspan="9"><i class="bi bi-inbox"></i>Aucune règle.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

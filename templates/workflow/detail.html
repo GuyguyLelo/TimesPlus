@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Validation{% endblock %}
+{% block content %}
+<section class="card detail-hero mb-3">
+  <p class="agent-kicker">Validation</p>
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1>{{ declaration.agent.nom_complet }}</h1>
+    <span class="badge text-bg-{{ declaration.statut|statut_badge }}">{{ declaration.get_statut_display }}</span>
+  </div>
+  <div class="agent-tags">
+    <span class="code-chip">{{ declaration.agent.matricule }}</span>
+    <span class="code-chip">{{ declaration.type_heure.code }}</span>
+    <span>{{ declaration.agent.service }}</span>
+    {% if declaration.agent.grade %}<span>{{ declaration.agent.grade }}</span>{% endif %}
+    {% if declaration.agent.fonction %}<span>{{ declaration.agent.fonction }}</span>{% endif %}
+  </div>
+</section>
+
+<div class="agent-facts mb-3">
+  <div class="fact"><span>Date</span><strong>{{ declaration.date_travail|date:"d/m/Y" }}</strong></div>
+  <div class="fact"><span>Début</span><strong>{{ declaration.heure_debut|time:"H:i" }}</strong></div>
+  <div class="fact"><span>Fin</span><strong>{{ declaration.heure_fin|time:"H:i" }}</strong></div>
+  <div class="fact"><span>Durée</span><strong>{{ declaration.duree_minutes|duree }}</strong></div>
+  <div class="fact"><span>Type</span><strong>{{ declaration.type_heure.libelle }}</strong></div>
+  <div class="fact"><span>Règle</span><strong>{{ declaration.regle_appliquee|default:"—" }}</strong><em class="fact-note">Coefficient {{ declaration.coefficient_applique }}</em></div>
+  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant }} {{ site_settings.devise }}</strong></div>
+  <div class="fact"><span>Étape</span><strong>{{ declaration.current_step|default:"—" }}</strong></div>
+  <div class="fact is-wide"><span>Motif</span><strong>{{ declaration.motif_libelle }}</strong></div>
+  <div class="fact is-wide"><span>Observation</span><strong>{{ declaration.observation|default:"—" }}</strong></div>
+</div>
+
+<div class="detail-split">
+  <div>
+    <section class="card ref-panel mb-3">
+      <header class="ref-head"><h2>Pièces jointes</h2></header>
+      <ul class="ref-list">
+        {% for piece in declaration.pieces.all %}
+          <li>
+            <a class="row-title" href="{% url 'overtime:attachment_download' piece.pk %}">{{ piece.nom_original }}</a>
+            <span class="code-chip">{{ piece.get_type_document_display }}</span>
+          </li>
+        {% empty %}
+          <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucune pièce.</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="card ref-panel">
+      <header class="ref-head"><h2>Historique</h2></header>
+      <div class="p-3">
+        <ol class="timeline mb-0">
+          {% for event in declaration.evenements.all %}
+            <li>
+              <strong>{{ event.action }}</strong>
+              <div class="small text-secondary">{{ event.created_at }} — {{ event.utilisateur|default:"—" }}{% if event.ip_address %} — {{ event.ip_address }}{% endif %}</div>
+              {% if event.commentaire %}<div>{{ event.commentaire }}</div>{% endif %}
+            </li>
+          {% empty %}
+            <li>Aucun événement.</li>
+          {% endfor %}
+          {% for decision in declaration.decisions.all %}
+            <li>
+              <strong>{{ decision.get_decision_display }}</strong>
+              <div class="small text-secondary">{{ decision.created_at }} — {{ decision.utilisateur }}{% if decision.ip_address %} — {{ decision.ip_address }}{% endif %}</div>
+              {% if decision.commentaire %}<div>{{ decision.commentaire }}</div>{% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </section>
+  </div>
+  <div>
+    {% if peut_approuver %}
+      <section class="card ref-panel mb-3">
+        <header class="ref-head"><h2>Approuver</h2></header>
+        <div class="p-3">
+          <form method="post" action="{% url 'workflow:approve' declaration.pk %}">
+            {% csrf_token %}
+            {% include "partials/form_fields.html" with form=approve_form %}
+            <button class="btn btn-primary" type="submit">Approuver</button>
+          </form>
+        </div>
+      </section>
+    {% endif %}
+    {% if peut_rejeter %}
+      <section class="card ref-panel">
+        <header class="ref-head"><h2>Rejeter</h2></header>
+        <div class="p-3">
+          <form method="post" action="{% url 'workflow:reject' declaration.pk %}">
+            {% csrf_token %}
+            {% include "partials/form_fields.html" with form=reject_form %}
+            <button class="btn btn-danger" type="submit">Rejeter</button>
+          </form>
+        </div>
+      </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

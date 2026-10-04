@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Trace d'audit{% endblock %}
+{% block content %}
+<section class="card detail-hero mb-3">
+  <p class="agent-kicker">Journal des opérations</p>
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1>{{ journal.action }}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'audit:list' %}">Retour</a>
+  </div>
+  <div class="agent-tags">
+    <span class="code-chip">{{ journal.model_name|default:"—" }}</span>
+    <span>{{ journal.created_at }}</span>
+  </div>
+</section>
+
+<div class="agent-facts mb-3">
+  <div class="fact"><span>Utilisateur</span><strong>{{ journal.user|default:"—" }}</strong></div>
+  <div class="fact"><span>Objet</span><strong>{{ journal.object_id|default:"—" }}</strong></div>
+  <div class="fact"><span>Adresse IP</span><strong>{{ journal.ip_address|default:"—" }}</strong></div>
+  <div class="fact is-wide"><span>Navigateur</span><strong>{{ journal.user_agent|default:"—" }}</strong></div>
+</div>
+
+<div class="detail-split">
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Anciennes valeurs</h2></header>
+    <pre class="audit-json mb-0">{{ journal.old_values }}</pre>
+  </section>
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Nouvelles valeurs</h2></header>
+    <pre class="audit-json mb-0">{{ journal.new_values }}</pre>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Agents{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h1 class="h3">Agents</h1>
+  {% if perms.agents.add_agent %}<a class="btn btn-primary" href="{% url 'agents:create' %}">Nouvel agent</a>{% endif %}
+</div>
+<form class="card filter-bar mb-3" method="get">
+  <div class="card-body row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label" for="q">Recherche</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ query }}" placeholder="Matricule, nom, prénom">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="service">Service</label>
+      <select class="form-select" id="service" name="service">
+        <option value="">Tous les services</option>
+        {% for service in services %}<option value="{{ service.pk }}" {% if request.GET.service == service.pk|stringformat:"s" %}selected{% endif %}>{{ service }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="actif">Statut</label>
+      <select class="form-select" id="actif" name="actif">
+        <option value="">Tous</option>
+        <option value="1" {% if request.GET.actif == "1" %}selected{% endif %}>Actifs</option>
+        <option value="0" {% if request.GET.actif == "0" %}selected{% endif %}>Inactifs</option>
+      </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary" type="submit">Filtrer</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead><tr><th>Matricule</th><th>Nom</th><th>Service</th><th>Grade</th><th>Fonction</th><th>Taux horaire</th><th>Statut</th><th></th></tr></thead>
+  <tbody>
+    {% for agent in agents %}
+      <tr>
+        <td><span class="code-chip">{{ agent.matricule }}</span></td>
+        <td>
+          <div class="agent-name-cell">
+            <a class="agent-mini" href="{% url 'agents:detail' agent.pk %}" tabindex="-1" aria-hidden="true">
+              {% if agent.photo %}<img src="{% url 'agents:photo' agent.pk %}" alt="">{% else %}<span>{{ agent.initiales }}</span>{% endif %}
+            </a>
+            <a class="row-title" href="{% url 'agents:detail' agent.pk %}">{{ agent.nom_complet }}</a>
+          </div>
+        </td>
+        <td>
+          <span class="niveau niveau-{{ agent.service.niveau }}">{{ agent.service.get_niveau_display }}</span>
+          {% if perms.services.view_service %}
+            <a href="{% url 'services:detail' agent.service.pk %}">{{ agent.service.nom }}</a>
+          {% else %}
+            {{ agent.service.nom }}
+          {% endif %}
+        </td>
+        <td>{{ agent.grade|default:"—" }}</td>
+        <td>{{ agent.fonction|default:"—" }}</td>
+        <td>{{ agent.taux_horaire|montant }} {{ site_settings.devise }}</td>
+        <td><span class="state state-{{ agent.statut|lower }}">{{ agent.get_statut_display }}</span></td>
+        <td class="row-actions"><a href="{% url 'agents:detail' agent.pk %}"><i class="bi bi-eye"></i> Voir</a></td>
+      </tr>
+    {% empty %}<tr><td colspan="8"><i class="bi bi-inbox"></i>Aucun agent.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

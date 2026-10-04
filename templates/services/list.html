@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h1 class="h3">Services</h1>
+  {% if perms.services.add_service %}<a class="btn btn-primary" href="{% url 'services:create' %}">Nouveau service</a>{% endif %}
+</div>
+<form class="card filter-bar mb-3" method="get">
+  <div class="card-body row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label" for="q">Recherche</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ query }}" placeholder="Code ou nom">
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary" type="submit">Rechercher</button></div>
+  </div>
+</form>
+
+<section class="card ref-panel">
+  <header class="ref-head">
+    <h2>Organigramme</h2>
+    <p>Direction générale, directions, divisions et bureaux, selon le décret n° 22/12B du 31 mars 2022.</p>
+  </header>
+  {% regroup services by service_parent as groups %}
+  {% for group in groups %}
+    <h3 class="ref-group">
+      <span class="cat-mark"><i class="bi bi-building"></i></span>
+      {% if group.grouper %}
+        <a href="{% url 'services:detail' group.grouper.pk %}">{{ group.grouper }}</a>
+      {% else %}
+        Services sans rattachement
+      {% endif %}
+    </h3>
+    <ul class="ref-list">
+      {% for service in group.list %}
+        <li>
+          <div class="ref-main">
+            <span class="code-chip">{{ service.code }}</span>
+            <a class="row-title" href="{% url 'services:detail' service.pk %}">{{ service.nom }}</a>
+            <span class="niveau niveau-{{ service.niveau }}">{{ service.get_niveau_display }}</span>
+          </div>
+          <div class="ref-side">
+            {% for agent in service.agents.all %}
+              {% if perms.agents.view_agent %}
+                <a class="code-chip" href="{% url 'agents:detail' agent.pk %}">{{ agent.prenom }} {{ agent.nom }}</a>
+              {% else %}
+                <span class="code-chip">{{ agent.prenom }} {{ agent.nom }}</span>
+              {% endif %}
+            {% endfor %}
+            {% if service.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+            <span class="row-actions"><a href="{% url 'services:detail' service.pk %}"><i class="bi bi-eye"></i> Voir</a></span>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% empty %}
+    <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun service.</p>
+  {% endfor %}
+</section>
+{% include "partials/pagination.html" %}
+{% endblock %}

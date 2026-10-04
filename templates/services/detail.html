@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ service.nom }}{% endblock %}
+{% block content %}
+<section class="card detail-hero mb-3">
+  <p class="agent-kicker">Fiche service</p>
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1>{{ service.nom }}</h1>
+    <div class="d-flex gap-2">
+      {% if perms.services.change_service %}<a class="btn btn-outline-primary" href="{% url 'services:update' service.pk %}">Modifier</a>{% endif %}
+      {% if perms.services.delete_service %}<a class="btn btn-outline-danger" href="{% url 'services:delete' service.pk %}">Supprimer</a>{% endif %}
+    </div>
+  </div>
+  <div class="agent-tags">
+    <span class="code-chip">{{ service.code }}</span>
+    <span class="niveau niveau-{{ service.niveau }}">{{ service.get_niveau_display }}</span>
+    {% if service.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+    {% if service.service_parent %}
+      <a href="{% url 'services:detail' service.service_parent.pk %}">{{ service.service_parent }}</a>
+    {% endif %}
+  </div>
+</section>
+
+<div class="agent-facts mb-3">
+  <div class="fact is-wide"><span>Description</span><strong>{{ service.description|default:"Aucune description." }}</strong></div>
+  <div class="fact"><span>Service parent</span><strong>{% if service.service_parent %}<a href="{% url 'services:detail' service.service_parent.pk %}">{{ service.service_parent.nom }}</a>{% else %}—{% endif %}</strong></div>
+  <div class="fact"><span>Sous-services</span><strong>{{ service.sous_services.count }}</strong></div>
+  <div class="fact"><span>Agents</span><strong>{{ service.agents.count }}</strong></div>
+</div>
+
+<div class="ref-layout">
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Sous-services</h2></header>
+    <ul class="ref-list">
+      {% for child in service.sous_services.all %}
+        <li>
+          <div class="ref-main">
+            <span class="code-chip">{{ child.code }}</span>
+            <a class="row-title" href="{% url 'services:detail' child.pk %}">{{ child.nom }}</a>
+            <span class="niveau niveau-{{ child.niveau }}">{{ child.get_niveau_display }}</span>
+          </div>
+          {% if child.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucun sous-service.</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Agents</h2></header>
+    <ul class="ref-list">
+      {% for agent in service.agents.all %}
+        <li>
+          <div class="ref-main">
+            <span class="code-chip">{{ agent.matricule }}</span>
+            {% if perms.agents.view_agent %}<a class="row-title" href="{% url 'agents:detail' agent.pk %}">{{ agent.nom_complet }}</a>{% else %}<strong>{{ agent.nom_complet }}</strong>{% endif %}
+          </div>
+          <span class="state state-{{ agent.statut|lower }}">{{ agent.get_statut_display }}</span>
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucun agent.</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

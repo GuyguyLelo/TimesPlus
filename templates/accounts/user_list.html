@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h1 class="h3">Utilisateurs</h1>
+  <a class="btn btn-primary" href="{% url 'accounts:user_create' %}">Nouvel utilisateur</a>
+</div>
+<form class="card filter-bar mb-3" method="get">
+  <div class="card-body row g-2 align-items-end">
+  <div class="col-md-4"><input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Identifiant, nom, e-mail" aria-label="Recherche"></div>
+  <div class="col-md-2"><button class="btn btn-primary" type="submit">Rechercher</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead><tr><th>Identifiant</th><th>Nom</th><th>Rôles</th><th>Actif</th><th></th></tr></thead>
+  <tbody>
+    {% for item in utilisateurs %}
+      <tr>
+        <td><span class="code-chip">{{ item.username }}</span></td>
+        <td>{{ item.get_full_name|default:"—" }}</td>
+        <td>{% for group in item.groups.all %}<span class="code-chip">{{ group.name }}</span> {% empty %}—{% endfor %}</td>
+        <td>{% if item.is_active %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}</td>
+        <td class="row-actions"><a href="{% url 'accounts:user_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a></td>
+      </tr>
+    {% empty %}<tr><td colspan="5"><i class="bi bi-inbox"></i>Aucun utilisateur.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

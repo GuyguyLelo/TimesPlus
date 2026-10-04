@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ groupe.name }}{% endblock %}
+{% block content %}
+<section class="card detail-hero mb-3">
+  <p class="agent-kicker">Groupe</p>
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1>{{ groupe.name }}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'accounts:groups' %}">Retour</a>
+  </div>
+  <div class="agent-tags">
+    <span class="code-chip">{{ groupe.user_set.count }} membre{{ groupe.user_set.count|pluralize }}</span>
+    <span class="code-chip">{{ groupe.permissions.count }} permission{{ groupe.permissions.count|pluralize }}</span>
+  </div>
+</section>
+
+<div class="ref-layout">
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Membres</h2></header>
+    <ul class="ref-list">
+      {% for user in groupe.user_set.all %}
+        <li>
+          <div class="ref-main">
+            <span class="code-chip">{{ user.username }}</span>
+            <strong>{{ user.get_full_name|default:"—" }}</strong>
+          </div>
+          {% if user.is_active %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucun membre.</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Permissions</h2></header>
+    <ul class="ref-list">
+      {% for perm in groupe.permissions.all %}
+        <li>
+          <div class="ref-main">
+            <span class="code-chip">{{ perm.content_type.app_label }}</span>
+            <strong>{{ perm.name }}</strong>
+          </div>
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucune permission.</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

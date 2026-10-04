@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% block content %}
+<div class="card form-card"><div class="card-body">
+  <h1 class="h4">Paramètres</h1>
+  <p class="text-secondary">Ces valeurs pilotent les plafonds, le week-end et l'identité des rapports. Elles ne constituent pas un barème juridique figé.</p>
+  <form method="post">{% csrf_token %}{% include "partials/form_fields.html" %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

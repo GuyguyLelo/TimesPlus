@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Rapports{% endblock %}
+{% block content %}
+<h1 class="h3">Rapports</h1>
+<p class="text-secondary">Les montants utilisent le taux horaire de l'agent et le coefficient de la règle en vigueur au moment du calcul.</p>
+<div class="row g-3">
+  <div class="col-md-4"><a class="card stat-card text-decoration-none" href="{% url 'reports:monthly' %}"><div class="card-body"><h2 class="h6">Rapport mensuel</h2><p class="mb-0">Synthèse du mois.</p></div></a></div>
+  <div class="col-md-4"><a class="card stat-card text-decoration-none" href="{% url 'reports:historical' %}"><div class="card-body"><h2 class="h6">Rapport historique</h2><p class="mb-0">Cumul des mois de 2026.</p></div></a></div>
+</div>
+{% endblock %}

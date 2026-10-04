@@ -1,0 +1,17 @@
+{% if field.widget_type == "checkbox" %}
+  <div class="form-check field-check is-wide{% if field.errors %} is-invalid{% endif %}">
+    {{ field }}
+    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+{% else %}
+  <div class="field{% if field.widget_type == 'textarea' or field.widget_type == 'clearablefile' or field.widget_type == 'file' or wide %} is-wide{% endif %}{% if field.errors %} is-invalid{% endif %}">
+    <label class="form-label" for="{{ field.id_for_label }}">
+      {{ field.label }}{% if field.field.required %} <span class="req" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {{ field }}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+{% endif %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="page-intro">
+  <h1>Tableau de bord</h1>
+  <p>Suivi des heures supplémentaires — {{ site_settings.sigle|default:"RDC" }}</p>
+</div>
+<form class="card mb-3" method="get">
+  <div class="card-body row g-2 align-items-end">
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="annee">Année</label>
+      <select class="form-select" id="annee" name="annee">
+        {% for year in years %}
+          <option value="{{ year }}" {% if selected.annee == year %}selected{% endif %}>{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="mois">Mois</label>
+      <select class="form-select" id="mois" name="mois">
+        <option value="">Tous</option>
+        {% for number, label in months %}
+          <option value="{{ number }}" {% if selected.mois == number|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="service">Service</label>
+      <select class="form-select" id="service" name="service">
+        <option value="">Tous</option>
+        {% for service in services %}
+          <option value="{{ service.pk }}" {% if selected.service == service.pk|stringformat:"s" %}selected{% endif %}>{{ service }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="statut">Statut</label>
+      <select class="form-select" id="statut" name="statut">
+        <option value="">Tous</option>
+        {% for value, label in statuts %}
+          <option value="{{ value }}" {% if selected.statut == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="type">Type d'heure</label>
+      <select class="form-select" id="type" name="type">
+        <option value="">Tous</option>
+        {% for item in types %}
+          <option value="{{ item.pk }}" {% if selected.type == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.libelle }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-1"><button class="btn btn-primary w-100" type="submit">Filtrer</button></div>
+  </div>
+</form>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl"><div class="card stat-card"><div class="card-body"><span class="stat-icon icon-blue"><i class="bi bi-people"></i></span><div><p>Agents actifs</p><strong>{{ cards.agents }}</strong></div></div></div></div>
+  <div class="col-6 col-xl"><div class="card stat-card"><div class="card-body"><span class="stat-icon icon-blue"><i class="bi bi-clock"></i></span><div><p>Heures du mois</p><strong>{{ cards.duree }}</strong></div></div></div></div>
+  <div class="col-6 col-xl"><div class="card stat-card"><div class="card-body"><span class="stat-icon icon-blue"><i class="bi bi-check2"></i></span><div><p>Validées</p><strong>{{ cards.approved }}</strong></div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h6">Heures par mois</h2><canvas data-chart="chart-months" height="160"></canvas></div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h6">Heures supplémentaires par service</h2><canvas data-chart="chart-services" height="160"></canvas></div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h6">Répartition par type</h2><canvas data-chart="chart-types" height="160"></canvas></div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h6">Demandes par statut</h2><canvas data-chart="chart-status" height="160"></canvas></div></div></div>
+</div>
+{{ chart_months|json_script:"chart-months" }}
+{{ chart_services|json_script:"chart-services" }}
+{{ chart_types|json_script:"chart-types" }}
+{{ chart_status|json_script:"chart-status" }}
+<div class="card mt-3">
+  <div class="card-body">
+    <h2 class="h6">Dernières déclarations</h2>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th>Date</th><th>Agent</th><th>Durée</th><th>Type</th><th>Statut</th></tr></thead>
+        <tbody>
+          {% for item in recent %}
+            <tr>
+              <td>{{ item.date_travail|date:"d/m/Y" }}</td>
+              <td>{{ item.agent.nom_complet }}</td>
+              <td>{{ item.duree_minutes|duree }}</td>
+              <td><span class="code-chip">{{ item.type_heure.code }}</span></td>
+              <td><span class="badge text-bg-{{ item.statut|statut_badge }}">{{ item.get_statut_display }}</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">Aucune déclaration pour ces filtres.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

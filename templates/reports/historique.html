@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="rapport-head">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker">Rapports</p>
+    <h1>{{ title }}</h1>
+    <p>{{ periode }}</p>
+  </div>
+  {% if perms.reports.export_reports %}
+    <div class="hs-tools">
+      <a class="btn btn-outline-primary" href="{% url 'reports:excel' %}?{{ querystring }}"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+      <a class="btn btn-primary" href="{% url 'reports:pdf' %}?kind=HISTORIQUE&{{ querystring }}"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+    </div>
+  {% endif %}
+</div>
+<div class="rapport-stats">
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-people"></i></span>
+      <div><p>Agents</p><strong>{{ par_agent|length }}</strong></div>
+    </div>
+  </article>
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-yellow"><i class="bi bi-clock"></i></span>
+      <div><p>Durée</p><strong>{{ duree }}</strong></div>
+    </div>
+  </article>
+  <article class="card stat-card">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
+      <div><p>Montant estimé</p><strong>{{ totaux.montant|montant }} <span>{{ site_settings.devise }}</span></strong></div>
+    </div>
+  </article>
+</div>
+<section class="hs-panel mb-3">
+  <header class="hs-list-head">
+    <span>Mois de {{ annee }}</span>
+    <span>12 mois</span>
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Historique mensuel {{ annee }}</caption>
+      <thead>
+        <tr><th>Mois</th><th>Agents</th><th>Saisies</th><th>Durée</th><th>Montant</th></tr>
+      </thead>
+      <tbody>
+        {% for row in mois_rows %}
+          <tr>
+            <td><a href="{% url 'reports:monthly' %}?mois={{ row.mois }}">{{ row.label }}</a></td>
+            <td>{{ row.agents }}</td>
+            <td>{{ row.nombre }}</td>
+            <td>{{ row.minutes|duree }}</td>
+            <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="hs-panel">
+  <header class="hs-list-head">
+    <span>Cumul par agent</span>
+    <span>{{ par_agent|length }} agent{{ par_agent|length|pluralize }}</span>
+  </header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <caption class="visually-hidden">Cumul par agent {{ annee }}</caption>
+      <thead>
+        <tr><th>Matricule</th><th>Agent</th><th>Service</th><th>Saisies</th><th>Durée</th><th>Montant</th></tr>
+      </thead>
+      <tbody>
+        {% for row in par_agent %}
+          <tr>
+            <td>{{ row.agent__matricule }}</td>
+            <td><strong class="row-title">{{ row.nom }}</strong></td>
+            <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
+            <td>{{ row.nombre }}</td>
+            <td>{{ row.minutes|duree }}</td>
+            <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune heure supplémentaire en {{ annee }}.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

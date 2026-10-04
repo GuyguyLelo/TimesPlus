@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Horaires{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div class="page-intro mb-0">
+    <h1>Horaires</h1>
+    <p>Jours et heures de présence. Un horaire sans service vaut pour toute l'administration.</p>
+  </div>
+  {% if perms.overtime.manage_rules %}<a class="btn btn-primary" href="{% url 'overtime:schedule_create' %}">Nouvel horaire</a>{% endif %}
+</div>
+
+<section class="card ref-panel">
+  <header class="ref-head">
+    <h2>Semaine de travail</h2>
+    <p>La barre bleue couvre les heures de présence, de 06:00 à 20:00. Le trait jaune marque la pause.</p>
+  </header>
+  {% regroup horaires by service as groups %}
+  {% for group in groups %}
+    <h3 class="ref-group">
+      <span class="cat-mark"><i class="bi bi-clock"></i></span>
+      {% if group.grouper %}
+        <span class="code-chip">{{ group.grouper.code }}</span>
+        {% if perms.services.view_service %}
+          <a href="{% url 'services:detail' group.grouper.pk %}">{{ group.grouper.nom }}</a>
+        {% else %}
+          {{ group.grouper.nom }}
+        {% endif %}
+      {% else %}
+        Toute l'administration
+      {% endif %}
+      <span class="schedule-legend">{{ group.list.0.nom }}</span>
+    </h3>
+    <div class="schedule-scale" aria-hidden="true">
+      <span></span>
+      <span class="schedule-scale-marks"><i>06:00</i><i>12:00</i><i>18:00</i></span>
+      <span></span>
+      <span></span>
+    </div>
+    <ul class="ref-list">
+      {% for item in group.list %}
+        <li class="schedule-row{% if not item.actif %} is-off{% endif %}">
+          <div class="schedule-day">
+            <span>{{ item.get_jour_semaine_display|slice:":3" }}</span>
+            <strong>{{ item.get_jour_semaine_display }}</strong>
+            {% if item.nom != group.list.0.nom %}<em>{{ item.nom }}</em>{% endif %}
+          </div>
+          <div class="schedule-track" aria-hidden="true">
+            <span class="schedule-block" style="left: {{ item.barre.debut }}%; width: {{ item.barre.largeur }}%;">
+              {% if item.barre.pause %}<span class="schedule-pause" style="left: {{ item.barre.pause }}%; width: {{ item.barre.pause_largeur }}%;"></span>{% endif %}
+            </span>
+          </div>
+          <div class="schedule-hours">
+            <strong>{{ item.heure_debut|time:"H:i" }} – {{ item.heure_fin|time:"H:i" }}</strong>
+            <span>{% if item.pause_debut %}Pause {{ item.pause_debut|time:"H:i" }} – {{ item.pause_fin|time:"H:i" }}{% else %}Sans pause{% endif %}</span>
+          </div>
+          <div class="ref-side">
+            {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+            {% if perms.overtime.manage_rules %}
+              <span class="row-actions">
+                <a href="{% url 'overtime:schedule_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+              </span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% empty %}
+    <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun horaire.</p>
+  {% endfor %}
+</section>
+{% include "partials/pagination.html" %}
+{% endblock %}

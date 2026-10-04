@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card agent-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker">Fiche agent</p>
+      <h1>{{ title }}</h1>
+    </header>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+      <section class="form-section">
+        <h2>Photo</h2>
+        <div class="agent-form-preview" id="agent-photo-preview"{% if not form.instance.photo %} hidden{% endif %}>
+          <img id="agent-photo-preview-img" alt="Aperçu de la photo"{% if form.instance.pk and form.instance.photo %} src="{% url 'agents:photo' form.instance.pk %}"{% endif %}>
+        </div>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.photo %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Identité</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.matricule %}
+          {% include "partials/one_field.html" with field=form.sexe %}
+          {% include "partials/one_field.html" with field=form.nom %}
+          {% include "partials/one_field.html" with field=form.postnom %}
+          {% include "partials/one_field.html" with field=form.prenom %}
+          {% include "partials/one_field.html" with field=form.date_naissance %}
+          {% include "partials/one_field.html" with field=form.email %}
+          {% include "partials/one_field.html" with field=form.telephone %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Affectation</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.service %}
+          {% include "partials/one_field.html" with field=form.grade %}
+          {% include "partials/one_field.html" with field=form.fonction %}
+          {% include "partials/one_field.html" with field=form.date_engagement %}
+          {% include "partials/one_field.html" with field=form.statut %}
+          {% include "partials/one_field.html" with field=form.taux_horaire %}
+          {% include "partials/one_field.html" with field=form.actif %}
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{% if form.instance.pk %}{% url 'agents:detail' form.instance.pk %}{% else %}{% url 'agents:list' %}{% endif %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var input = document.getElementById("id_photo");
+  var box = document.getElementById("agent-photo-preview");
+  var img = document.getElementById("agent-photo-preview-img");
+  if (!input || !box || !img) return;
+  var saved = img.getAttribute("src") || "";
+  input.addEventListener("change", function () {
+    var file = input.files && input.files[0];
+    if (!file || file.type.indexOf("image/") !== 0) return;
+    if (img.dataset.objectUrl) URL.revokeObjectURL(img.dataset.objectUrl);
+    var url = URL.createObjectURL(file);
+    img.dataset.objectUrl = url;
+    img.src = url;
+    box.hidden = false;
+  });
+  var clear = document.getElementById("photo-clear_id");
+  if (!clear) return;
+  clear.addEventListener("change", function () {
+    if (!clear.checked) {
+      if (saved) {
+        img.src = saved;
+        box.hidden = false;
+      }
+      return;
+    }
+    if (input.files && input.files.length) return;
+    box.hidden = true;
+  });
+})();
+</script>
+{% endblock %}

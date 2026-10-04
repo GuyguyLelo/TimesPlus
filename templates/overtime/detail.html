@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Déclaration{% endblock %}
+{% block content %}
+<section class="card detail-hero mb-3">
+  <p class="agent-kicker">Déclaration d'heures supplémentaires</p>
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1>{{ declaration.date_travail|date:"d/m/Y" }}</h1>
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="badge text-bg-{{ declaration.statut|statut_badge }}">{{ declaration.get_statut_display }}</span>
+      {% if declaration.editable and perms.overtime.change_overtime %}
+        <a class="btn btn-outline-primary" href="{% url 'overtime:update' declaration.pk %}">Modifier</a>
+      {% endif %}
+      {% if declaration.supprimable and perms.overtime.delete_overtime %}
+        <a class="btn btn-outline-danger" href="{% url 'overtime:delete' declaration.pk %}">Supprimer</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'overtime:mine' %}">Retour</a>
+    </div>
+  </div>
+  <div class="agent-tags">
+    {% if perms.agents.view_agent %}<a class="row-title" href="{% url 'agents:detail' declaration.agent.pk %}">{{ declaration.agent.nom_complet }}</a>{% else %}<span class="row-title">{{ declaration.agent.nom_complet }}</span>{% endif %}
+    <span class="code-chip">{{ declaration.agent.matricule }}</span>
+    <span class="code-chip">{{ declaration.type_heure.code }}</span>
+    <span>{{ declaration.agent.service }}</span>
+  </div>
+</section>
+
+<div class="agent-facts mb-3">
+  <div class="fact"><span>Début</span><strong>{{ declaration.heure_debut|time:"H:i" }}</strong></div>
+  <div class="fact"><span>Fin</span><strong>{{ declaration.heure_fin|time:"H:i" }}</strong></div>
+  <div class="fact"><span>Durée</span><strong>{{ declaration.duree_minutes|duree }}</strong></div>
+  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant }} {{ site_settings.devise }}</strong></div>
+  <div class="fact"><span>Type</span><strong>{{ declaration.type_heure.libelle }}</strong></div>
+  <div class="fact"><span>Règle</span><strong>{{ declaration.regle_appliquee|default:"—" }}</strong></div>
+  <div class="fact"><span>Coefficient</span><strong><span class="coef">{{ declaration.coefficient_applique }}</span></strong></div>
+  <div class="fact is-wide"><span>Motif</span><strong>{{ declaration.motif_libelle }}</strong></div>
+  <div class="fact is-wide"><span>Observation</span><strong>{{ declaration.observation|default:"—" }}</strong></div>
+</div>
+
+{% if declaration.ventilation|length > 1 %}
+<section class="card ref-panel mb-3">
+  <header class="ref-head"><h2>Ventilation conservée</h2></header>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Début</th><th>Fin</th><th>Durée</th><th>Type</th><th>Règle</th><th>Coef.</th><th>Montant</th></tr></thead>
+      <tbody>
+        {% for segment in declaration.ventilation %}
+          <tr>
+            <td>{{ segment.debut }}</td><td>{{ segment.fin }}</td><td>{{ segment.minutes|duree }}</td>
+            <td><span class="code-chip">{{ segment.type_code }}</span></td>
+            <td>{{ segment.regle_nom }}</td>
+            <td><span class="coef">{{ segment.coefficient }}</span></td>
+            <td>{{ segment.montant|montant }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<div class="detail-split">
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Pièces jointes</h2></header>
+    <ul class="ref-list">
+      {% for piece in declaration.pieces.all %}
+        <li>
+          <a class="row-title" href="{% url 'overtime:attachment_download' piece.pk %}">{{ piece.nom_original }}</a>
+          <span class="code-chip">{{ piece.get_type_document_display }}</span>
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucune pièce.</span></li>
+      {% endfor %}
+    </ul>
+    {% if declaration.editable %}
+      <form method="post" action="{% url 'overtime:add_attachment' declaration.pk %}" enctype="multipart/form-data" class="agent-photo-form px-3 pb-3">
+        {% csrf_token %}
+        {{ attachment_form.type_document }}
+        {{ attachment_form.fichier }}
+        <button class="btn btn-primary" type="submit">Ajouter</button>
+      </form>
+    {% endif %}
+  </section>
+  <section class="card ref-panel">
+    <header class="ref-head"><h2>Historique</h2></header>
+    <div class="p-3">
+      <ol class="timeline mb-0">
+        {% for event in declaration.evenements.all %}
+          <li>
+            <strong>{{ event.action }}</strong>
+            <div class="small text-secondary">{{ event.created_at }} — {{ event.utilisateur|default:"système" }}</div>
+            {% if event.commentaire %}<div>{{ event.commentaire }}</div>{% endif %}
+          </li>
+        {% empty %}
+          <li>Aucun événement.</li>
+        {% endfor %}
+      </ol>
+      {% for decision in declaration.decisions.all %}
+        <p class="small mb-1"><strong>{{ decision.get_decision_display }}</strong> — {{ decision.utilisateur }} — {{ decision.created_at }}{% if decision.commentaire %} — {{ decision.commentaire }}{% endif %}</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="hs-head">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker">Heures supplémentaires</p>
+    <h1>{{ title }}</h1>
+    <p>{{ periode_label }} — {{ page_obj.paginator.count }} déclaration{{ page_obj.paginator.count|pluralize }}</p>
+  </div>
+  <div class="hs-tools">
+    {% if can_switch %}
+      <div class="hs-scope" role="group" aria-label="Périmètre des déclarations">
+        <a class="{% if showing_all %}is-on{% endif %}" href="?{% querystring portee='' %}">Toutes</a>
+        <a class="{% if not showing_all %}is-on{% endif %}" href="?{% querystring portee='miennes' %}">Les miennes</a>
+      </div>
+    {% endif %}
+    {% if perms.overtime.add_overtime %}
+      <a class="btn btn-primary" href="{% url 'overtime:create' %}">Saisie Heure Sup</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="hs-filters" method="get">
+  {% if request.GET.portee %}<input type="hidden" name="portee" value="{{ request.GET.portee }}">{% endif %}
+  <div>
+    <label class="form-label" for="q">Recherche</label>
+    <input class="form-control" id="q" type="search" name="q" value="{{ request.GET.q }}" placeholder="Motif, agent, matricule">
+  </div>
+  <div>
+    <label class="form-label" for="statut">Statut</label>
+    <select class="form-select" id="statut" name="statut">
+      <option value="">Tous</option>
+      {% for value, label in statuts %}
+        <option value="{{ value }}" {% if request.GET.statut == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="form-label" for="mois">Mois</label>
+    <select class="form-select" id="mois" name="mois">
+      {% for value, label in mois_choices %}
+        <option value="{{ value }}" {% if filtre_mois == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="form-label" for="type">Type</label>
+    <select class="form-select" id="type" name="type">
+      <option value="">Tous</option>
+      {% for item in types %}<option value="{{ item.pk }}" {% if request.GET.type == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.libelle }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="form-label" for="debut">Du</label>
+    <input class="form-control" id="debut" type="date" name="debut" value="{{ filtre_debut }}">
+  </div>
+  <div>
+    <label class="form-label" for="fin">Au</label>
+    <input class="form-control" id="fin" type="date" name="fin" value="{{ filtre_fin }}">
+  </div>
+  <button class="btn btn-primary" type="submit">Filtrer</button>
+</form>
+
+<section class="hs-panel">
+  <header class="hs-list-head">
+    <span>Créneau de 16:00 à minuit</span>
+    <div class="hs-sort">
+      <a href="?{% querystring tri='date' ordre='asc' %}">Date</a>
+      <a href="?{% querystring tri='duree' ordre='desc' %}">Durée</a>
+    </div>
+  </header>
+  <ul class="hs-list">
+    {% for item in declarations %}
+      {% with barre=item|creneau %}
+      <li class="hs-row{% if show_agent %} has-agent{% endif %}">
+        <div class="hs-date">
+          <span>{{ item.date_travail|date:"d" }}</span>
+          <strong>{{ item.date_travail|date:"b" }}</strong>
+          <em>{{ item.date_travail|date:"Y" }}</em>
+        </div>
+        {% if show_agent %}
+          <div class="hs-agent">
+            <strong>{{ item.agent.nom_complet }}</strong>
+            <span>
+              <span class="code-chip">{{ item.agent.matricule }}</span>
+              {{ item.agent.service.code }}
+            </span>
+          </div>
+        {% endif %}
+        <div class="hs-slot">
+          <strong>{{ item.heure_debut|time:"H:i" }} – {{ item.heure_fin|time:"H:i" }}</strong>
+          <span>{{ item.duree_minutes|duree }}</span>
+          <div class="hs-track" aria-hidden="true">
+            <i style="left: {{ barre.left }}%; width: {{ barre.width }}%;"></i>
+          </div>
+        </div>
+        <div class="hs-motif">
+          <strong>{{ item.motif_libelle }}</strong>
+          <span class="code-chip">{{ item.type_heure.code }}</span>
+        </div>
+        <div class="hs-side">
+          <span class="state state-{{ item.statut|lower }}">{{ item.get_statut_display }}</span>
+          <span class="row-actions">
+            <a href="{% url 'overtime:detail' item.pk %}"><i class="bi bi-eye"></i> Voir</a>
+            {% if item.editable and perms.overtime.change_overtime %}
+              <a href="{% url 'overtime:update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+            {% endif %}
+          </span>
+        </div>
+      </li>
+      {% endwith %}
+    {% empty %}
+      <li class="ref-empty"><i class="bi bi-inbox"></i>Aucune heure supplémentaire sur cette période.</li>
+    {% endfor %}
+  </ul>
+</section>
+{% include "partials/pagination.html" %}
+{% endblock %}

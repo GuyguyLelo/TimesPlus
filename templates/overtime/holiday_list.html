@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Jours fériés{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-end flex-wrap">
+  <div class="page-intro mb-0">
+    <h1>Jours fériés</h1>
+  </div>
+  <form class="holiday-tools" method="get">
+    <input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Libellé" aria-label="Recherche">
+    <button class="btn btn-primary" type="submit">Rechercher</button>
+    {% if perms.overtime.manage_rules %}<a class="btn btn-outline-primary" href="{% url 'overtime:holiday_create' %}">Ajouter</a>{% endif %}
+  </form>
+</div>
+
+<section class="card ref-panel">
+  {% regroup jours by date.year as annees %}
+  {% for annee in annees %}
+    <h3 class="ref-group">
+      <span class="cat-mark"><i class="bi bi-calendar-event"></i></span>
+      {{ annee.grouper }}
+      <span class="schedule-legend">{{ annee.list|length }} jour{{ annee.list|length|pluralize }}</span>
+    </h3>
+    <ul class="ref-list holiday-list">
+      {% for item in annee.list %}
+        <li>
+          <div class="holiday-main">
+            <time datetime="{{ item.date|date:'Y-m-d' }}">{{ item.date|date:"d/m" }}</time>
+            <strong>{{ item.libelle }}</strong>
+            <span class="holiday-type holiday-{{ item.type }}">{{ item.get_type_display }}</span>
+          </div>
+          <div class="ref-side">
+            {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+            {% if perms.overtime.manage_rules %}
+              <span class="row-actions">
+                <a href="{% url 'overtime:holiday_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+              </span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% empty %}
+    <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun jour férié.</p>
+  {% endfor %}
+</section>
+{% include "partials/pagination.html" %}
+{% endblock %}

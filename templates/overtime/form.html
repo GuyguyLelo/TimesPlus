@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card agent-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker">Heures supplémentaires</p>
+      <h1>{{ title }}</h1>
+      {% if horaire %}
+        <p class="saisie-note">Horaire administratif : {{ horaire.heure_debut|time:"H:i" }} – {{ horaire.heure_fin|time:"H:i" }} ({{ horaire.nom }}).</p>
+      {% endif %}
+    </header>
+    <form method="post" id="declaration-form" data-preview-url="{% url 'overtime:preview' %}" data-agent-url="{% url 'overtime:agent_search' %}" data-exclude="{{ declaration.pk|default:'' }}">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+      {% if form.recherche_agent %}
+        <section class="form-section">
+          <h2>Agent</h2>
+          <div class="field is-wide agent-search">
+            <label class="form-label" for="agent-query">Agent <span class="req" aria-hidden="true">*</span></label>
+            <input class="form-control" id="agent-query" type="search" placeholder="Matricule, nom, postnom ou prénom" value="{{ form.agent_label }}" autocomplete="off">
+            <ul class="agent-results" id="agent-results" hidden></ul>
+            {% for error in form.agent.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            <div class="agent-pick" id="agent-pick" {% if not form.agent_carte %}hidden{% endif %}>
+              <div class="agent-pick-photo" id="agent-pick-photo">
+                {% if form.agent_carte.photo %}
+                  <img src="{{ form.agent_carte.photo }}" alt="Photo de {{ form.agent_carte.nom }}">
+                {% else %}
+                  <span>{{ form.agent_carte.initiales|default:"" }}</span>
+                {% endif %}
+              </div>
+              <div class="agent-pick-id">
+                <strong id="agent-pick-name">{{ form.agent_carte.nom }}</strong>
+                <span class="code-chip" id="agent-pick-matricule">{{ form.agent_carte.matricule }}</span>
+                <p id="agent-pick-role">{% if form.agent_carte.grade %}{{ form.agent_carte.grade }}{% endif %}{% if form.agent_carte.grade and form.agent_carte.fonction %} · {% endif %}{% if form.agent_carte.fonction %}{{ form.agent_carte.fonction }}{% endif %}</p>
+                <p id="agent-pick-service">{{ form.agent_carte.service }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+
+      <section class="form-section">
+        <h2>Période</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.mois %}
+          {% include "partials/one_field.html" with field=form.date_travail %}
+          {% include "partials/one_field.html" with field=form.heure_debut %}
+          {% include "partials/one_field.html" with field=form.heure_fin %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Motif</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.motif wide=1 %}
+          {% include "partials/one_field.html" with field=form.observation %}
+        </div>
+      </section>
+
+      <section class="saisie-preview" aria-live="polite">
+        <div>
+          <span>Durée calculée</span>
+          <strong id="preview-duree">{% if calculation %}{{ calculation.duree_minutes|duree }}{% else %}—{% endif %}</strong>
+        </div>
+        <div>
+          <span>Type détecté</span>
+          <strong id="preview-type">{% if calculation %}{{ calculation.type_code }}{% else %}—{% endif %}</strong>
+        </div>
+        <p id="preview-message">Le calcul enregistré fait foi. Cet aperçu interroge le serveur.</p>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'overtime:mine' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
