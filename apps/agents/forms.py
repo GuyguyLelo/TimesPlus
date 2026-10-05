@@ -3,7 +3,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
 
 from apps.accounts.form_mixins import BootstrapFormMixin
-from apps.agents.models import Agent, Fonction, Grade
+from apps.agents.models import Agent, Bareme, Fonction, Grade
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
 PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -45,7 +45,6 @@ class AgentForm(BootstrapFormMixin, forms.ModelForm):
             "service",
             "date_engagement",
             "statut",
-            "taux_horaire",
             "actif",
         ]
         widgets = {
@@ -84,11 +83,39 @@ class AgentForm(BootstrapFormMixin, forms.ModelForm):
     def clean_matricule(self):
         return (self.cleaned_data["matricule"] or "").strip().upper()
 
+
+class BaremeForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Bareme
+        fields = ["grade", "fonction", "taux_horaire", "actif"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["grade"].queryset = _kept(Grade, self.instance.grade_id)
+        self.fields["fonction"].queryset = _kept(Fonction, self.instance.fonction_id)
+        self.fields["grade"].empty_label = "Choisir un grade"
+        self.fields["fonction"].empty_label = "Choisir une fonction"
+        self.fields["grade"].label_from_instance = lambda item: f"{item.categorie} · {item}"
+        self.fields["fonction"].label_from_instance = lambda item: f"{item.get_famille_display()} · {item.libelle}"
+
     def clean_taux_horaire(self):
         value = self.cleaned_data["taux_horaire"]
         if value < 0:
             raise forms.ValidationError("Le taux horaire ne peut pas être négatif.")
         return value
+
+    def clean(self):
+        cleaned = super().clean()
+        grade = cleaned.get("grade")
+        fonction = cleaned.get("fonction")
+        if not grade or not fonction:
+            return cleaned
+        doublon = Bareme.objects.filter(grade=grade, fonction=fonction)
+        if self.instance.pk:
+            doublon = doublon.exclude(pk=self.instance.pk)
+        if doublon.exists():
+            raise forms.ValidationError("Un barème existe déjà pour ce grade et cette fonction.")
+        return cleaned
 
 
 class AgentPhotoForm(forms.Form):

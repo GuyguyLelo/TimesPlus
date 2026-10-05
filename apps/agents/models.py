@@ -61,8 +61,59 @@ class Fonction(models.Model):
         return self.libelle
 
 
+class Bareme(models.Model):
+    """Taux horaire d'un couple grade et fonction.
+
+    Le montant est paramétré par l'administration. Il ne reprend pas un barème légal figé.
+    """
+
+    grade = models.ForeignKey(
+        Grade,
+        verbose_name="grade",
+        on_delete=models.PROTECT,
+        related_name="baremes",
+    )
+    fonction = models.ForeignKey(
+        Fonction,
+        verbose_name="fonction",
+        on_delete=models.PROTECT,
+        related_name="baremes",
+    )
+    taux_horaire = models.DecimalField(
+        "taux horaire",
+        max_digits=12,
+        decimal_places=2,
+        help_text="Montant horaire appliqué aux agents de ce grade et de cette fonction.",
+    )
+    actif = models.BooleanField("actif", default=True)
+
+    class Meta:
+        verbose_name = "barème"
+        verbose_name_plural = "barèmes"
+        ordering = ["grade__ordre", "fonction__ordre"]
+        constraints = [
+            models.UniqueConstraint(fields=["grade", "fonction"], name="bareme_grade_fonction"),
+        ]
+
+    def __str__(self):
+        return f"{self.grade} — {self.fonction}"
+
+
+def taux_horaire_bareme(agent):
+    """Taux horaire actif du grade et de la fonction, ou None."""
+    grade_id = getattr(agent, "grade_id", None)
+    fonction_id = getattr(agent, "fonction_id", None)
+    if not grade_id or not fonction_id:
+        return None
+    return (
+        Bareme.objects.filter(grade_id=grade_id, fonction_id=fonction_id, actif=True)
+        .values_list("taux_horaire", flat=True)
+        .first()
+    )
+
+
 class Agent(models.Model):
-    """Agent de l'administration. Le taux horaire est une donnée paramétrée."""
+    """Agent de l'administration. Son taux horaire vient du barème grade et fonction."""
 
     class Sexe(models.TextChoices):
         MASCULIN = "M", "Masculin"
@@ -117,13 +168,6 @@ class Agent(models.Model):
         choices=Statut.choices,
         default=Statut.ACTIF,
     )
-    taux_horaire = models.DecimalField(
-        "taux horaire",
-        max_digits=12,
-        decimal_places=2,
-        default=0,
-        help_text="Montant unitaire paramétré par l'administration. Aucun barème n'est codé en dur.",
-    )
     actif = models.BooleanField("actif", default=True)
     created_at = models.DateTimeField("créé le", auto_now_add=True)
     updated_at = models.DateTimeField("modifié le", auto_now=True)
@@ -158,3 +202,7 @@ class Agent(models.Model):
     def initiales(self):
         letters = "".join(part[0] for part in (self.prenom, self.nom) if part)
         return letters.upper()[:2] or "AG"
+
+    @property
+    def taux_applique(self):
+        return taux_horaire_bareme(self)

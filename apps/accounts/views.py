@@ -23,8 +23,6 @@ class AppLoginView(LoginView):
             context["demo_accounts"] = [
                 {"username": "admin", "password": "admin123", "role": "Super administrateur"},
                 {"username": "rh", "password": "Gestion-Heures-Rh-2026!", "role": "Administration RH"},
-                {"username": "chef", "password": "Gestion-Heures-Chef-2026!", "role": "Chef de service"},
-                {"username": "agent", "password": "Gestion-Heures-Agent-2026!", "role": "Agent"},
             ]
         return context
 

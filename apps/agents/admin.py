@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.agents.models import Agent, Fonction, Grade
+from apps.agents.models import Agent, Bareme, Fonction, Grade
 from apps.audit.admin_mixins import AuditAdminMixin
 
 
@@ -18,6 +18,15 @@ class FonctionAdmin(admin.ModelAdmin):
     list_filter = ("famille", "actif")
     search_fields = ("code", "libelle")
     ordering = ("ordre",)
+
+
+@admin.register(Bareme)
+class BaremeAdmin(admin.ModelAdmin):
+    list_display = ("grade", "fonction", "taux_horaire", "actif")
+    list_filter = ("actif", "grade__categorie", "fonction__famille")
+    search_fields = ("grade__libelle", "grade__code", "fonction__libelle", "fonction__code")
+    autocomplete_fields = ("grade", "fonction")
+    list_select_related = ("grade", "fonction")
 
 
 @admin.register(Agent)

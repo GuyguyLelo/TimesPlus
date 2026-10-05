@@ -5,7 +5,7 @@ Aucune règle juridique ou financière n'est codée ici. Le moteur :
 2. classe chaque minute selon les règles actives, les jours fériés et les
    paramètres de week-end ;
 3. retient la règle applicable ;
-4. applique son coefficient au taux horaire de l'agent ;
+4. applique son coefficient au taux horaire du barème (grade et fonction) ;
 5. produit un montant estimé et conserve la ventilation.
 """
 
@@ -26,6 +26,9 @@ MSG_PLAFOND = "⚠ Vous avez dépassé le plafond autorisé."
 MSG_SANS_REGLE = (
     "Aucune règle active ne couvre l'ensemble de la période déclarée. "
     "Contactez l'administrateur pour paramétrer les règles de calcul."
+)
+MSG_SANS_BAREME = (
+    "Aucun barème actif ne correspond au grade et à la fonction de cet agent."
 )
 MSG_DATE_FUTURE = "La date de travail ne peut pas être dans le futur."
 MSG_AGENT_INACTIF = "Cet agent n'est pas actif."
@@ -145,6 +148,7 @@ def _money(hours: Decimal, taux: Decimal, coefficient: Decimal) -> Decimal:
 
 def classify_period(jour: date, heure_debut: time, heure_fin: time, agent) -> CalculationResult:
     """Classe la période et calcule le montant à partir des règles en base."""
+    from apps.agents.models import taux_horaire_bareme
     from apps.overtime.models import Holiday
     from apps.settings_app.models import SiteSettings
 
@@ -176,7 +180,11 @@ def classify_period(jour: date, heure_debut: time, heure_fin: time, agent) -> Ca
             seg_start = minute
     raw_segments.append((seg_start, end_m, current))
 
-    taux = agent.taux_horaire or Decimal("0")
+    if not getattr(agent, "grade_id", None) or not getattr(agent, "fonction_id", None):
+        raise CalculationError(MSG_SANS_BAREME)
+    taux = taux_horaire_bareme(agent)
+    if taux is None:
+        raise CalculationError(MSG_SANS_BAREME)
     segments: list[Segment] = []
     total = Decimal("0.00")
     for seg_start, seg_end, rule in raw_segments:

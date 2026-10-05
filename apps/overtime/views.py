@@ -133,9 +133,7 @@ class OvertimeListView(AppPermissionMixin, ListView):
         return page_size()
 
     def _showing_all(self):
-        if not can_view_all(self.request.user):
-            return False
-        return self.request.GET.get("portee") != "miennes"
+        return can_view_all(self.request.user)
 
     def _params(self):
         params = self.request.GET.copy()
@@ -176,7 +174,6 @@ class OvertimeListView(AppPermissionMixin, ListView):
         context["statuts"] = OvertimeRequest.Statut.choices
         context["show_agent"] = showing_all
         context["showing_all"] = showing_all
-        context["can_switch"] = can_view_all(self.request.user)
         context["mon_agent_id"] = get_profile(self.request.user).agent_id
         return context
 
@@ -629,7 +626,6 @@ class PayrollView(AppPermissionMixin, TemplateView):
                 "totaux": totals,
                 "duree": format_minutes(totals["minutes"]),
                 "par_agent": by_agent(queryset),
-                "lignes": list(queryset),
                 "paye": mois_est_paye(ANNEE_MOIS, numero),
                 "paiement": archives.get(choisi),
                 "courant": choisi == mois_courant,

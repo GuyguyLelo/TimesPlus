@@ -54,6 +54,12 @@ def fiche_agent(agent):
     """Identité affichée lorsqu'un agent est choisi dans une saisie."""
     from django.urls import reverse
 
+    from apps.agents.models import taux_horaire_bareme
+    from apps.overtime.formatting import format_montant
+    from apps.settings_app.models import SiteSettings
+
+    taux = taux_horaire_bareme(agent)
+    devise = SiteSettings.load().devise
     return {
         "id": agent.pk,
         "matricule": agent.matricule,
@@ -61,6 +67,7 @@ def fiche_agent(agent):
         "grade": str(agent.grade) if agent.grade_id else "",
         "fonction": str(agent.fonction) if agent.fonction_id else "",
         "service": agent.service.nom,
+        "taux": format_montant(taux, devise) if taux is not None else "Aucun barème",
         "initiales": agent.initiales,
         "photo": reverse("agents:photo", args=[agent.pk]) if agent.photo else "",
     }

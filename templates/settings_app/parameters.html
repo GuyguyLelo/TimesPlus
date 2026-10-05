@@ -1,13 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Paramètres{% endblock %}
 {% block content %}
-<div class="card form-card"><div class="card-body">
-  <h1 class="h4">Paramètres</h1>
-  <p class="text-secondary">Ces valeurs pilotent les plafonds, le week-end et l'identité des rapports. Elles ne constituent pas un barème juridique figé.</p>
-  <form method="post">{% csrf_token %}{% include "partials/form_fields.html" %}
-    <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Enregistrer</button>
-    </div>
-  </form>
-</div></div>
+<div class="card agent-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker">Administration</p>
+      <h1>Paramètres</h1>
+      <p class="saisie-note">Ces valeurs pilotent les plafonds, le week-end et l'identité des rapports. Elles ne constituent pas un barème juridique figé.</p>
+    </header>
+    <form method="post">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+      <section class="form-section">
+        <h2>Identité</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.nom_administration wide=1 %}
+          {% include "partials/one_field.html" with field=form.sigle %}
+          {% include "partials/one_field.html" with field=form.devise %}
+          {% include "partials/one_field.html" with field=form.adresse wide=1 %}
+          {% include "partials/one_field.html" with field=form.email_contact wide=1 %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Calcul</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.jours_weekend wide=1 %}
+          {% include "partials/one_field.html" with field=form.plafond_journalier_minutes %}
+          {% include "partials/one_field.html" with field=form.plafond_mensuel_minutes %}
+          {% include "partials/one_field.html" with field=form.autoriser_date_future %}
+          {% include "partials/one_field.html" with field=form.autoriser_agent_inactif %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Affichage</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.elements_par_page %}
+          {% include "partials/one_field.html" with field=form.taille_max_fichier_mo %}
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

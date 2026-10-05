@@ -37,41 +37,12 @@
 </div>
 <section class="hs-panel mb-3">
   <header class="hs-list-head">
-    <span>{{ consultation.label }}</span>
+    <span>Cumul par agent — {{ consultation.label }}</span>
     {% if consultation.paye %}
       <span class="state state-approuve">Payé{% if consultation.paiement %} · {{ consultation.paiement.cloture_le|date:"d/m/Y" }}{% endif %}</span>
     {% else %}
       <span class="state">Mois en cours</span>
     {% endif %}
-  </header>
-  <div class="table-responsive">
-    <table class="table mb-0">
-      <caption class="visually-hidden">Saisies de {{ consultation.label }}</caption>
-      <thead>
-        <tr><th>Date</th><th>Matricule</th><th>Agent</th><th>Service</th><th>Heures</th><th>Durée</th><th>Montant</th></tr>
-      </thead>
-      <tbody>
-        {% for item in consultation.lignes %}
-          <tr>
-            <td>{{ item.date_travail|date:"d/m/Y" }}</td>
-            <td>{{ item.agent.matricule }}</td>
-            <td><strong class="row-title">{{ item.agent.nom_complet }}</strong></td>
-            <td><span class="code-chip">{{ item.agent.service.code }}</span></td>
-            <td>{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}</td>
-            <td>{{ item.duree_minutes|duree }}</td>
-            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="7"><i class="bi bi-inbox"></i>Aucune heure supplémentaire pour ce mois.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-<section class="hs-panel mb-3">
-  <header class="hs-list-head">
-    <span>Cumul par agent</span>
-    <span>{{ consultation.par_agent|length }} agent{{ consultation.par_agent|length|pluralize }}</span>
   </header>
   <div class="table-responsive">
     <table class="table mb-0">

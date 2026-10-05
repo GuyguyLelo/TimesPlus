@@ -236,7 +236,8 @@
     var matricule = document.getElementById("agent-pick-matricule");
     var role = document.getElementById("agent-pick-role");
     var service = document.getElementById("agent-pick-service");
-    if (!pick || !photo || !name || !matricule || !role || !service) {
+    var taux = document.getElementById("agent-pick-taux");
+    if (!pick || !photo || !name || !matricule || !role || !service || !taux) {
       return;
     }
     photo.textContent = "";
@@ -261,6 +262,7 @@
     }
     role.textContent = parts.join(" · ");
     service.textContent = item.service || "";
+    taux.textContent = "Taux horaire : " + (item.taux || "Aucun barème");
     pick.hidden = false;
   }
 

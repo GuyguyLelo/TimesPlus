@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card agent-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker"><a href="{% url 'settings_app:parameters' %}">Paramètres</a></p>
+      <h1>{{ title }}</h1>
+      <p class="saisie-note">Le taux s'applique à tous les agents qui ont ce grade et cette fonction.</p>
+    </header>
+    <form method="post">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+      <section class="form-section">
+        <h2>Grade et fonction</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.grade %}
+          {% include "partials/one_field.html" with field=form.fonction %}
+        </div>
+      </section>
+      <section class="form-section">
+        <h2>Taux</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.taux_horaire %}
+          {% include "partials/one_field.html" with field=form.actif %}
+        </div>
+      </section>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'agents:bareme' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

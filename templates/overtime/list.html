@@ -9,12 +9,6 @@
     <p>{{ periode_label }} — {{ page_obj.paginator.count }} déclaration{{ page_obj.paginator.count|pluralize }}</p>
   </div>
   <div class="hs-tools">
-    {% if can_switch %}
-      <div class="hs-scope" role="group" aria-label="Périmètre des déclarations">
-        <a class="{% if showing_all %}is-on{% endif %}" href="?{% querystring portee='' %}">Toutes</a>
-        <a class="{% if not showing_all %}is-on{% endif %}" href="?{% querystring portee='miennes' %}">Les miennes</a>
-      </div>
-    {% endif %}
     {% if perms.overtime.add_overtime %}
       <a class="btn btn-primary" href="{% url 'overtime:create' %}">Saisie Heure Sup</a>
     {% endif %}
@@ -22,7 +16,6 @@
 </div>
 
 <form class="hs-filters" method="get">
-  {% if request.GET.portee %}<input type="hidden" name="portee" value="{{ request.GET.portee }}">{% endif %}
   <div>
     <label class="form-label" for="q">Recherche</label>
     <input class="form-control" id="q" type="search" name="q" value="{{ request.GET.q }}" placeholder="Motif, agent, matricule">
@@ -107,9 +100,6 @@
           {% endif %}
           <span class="row-actions">
             <a href="{% url 'overtime:detail' item.pk %}"><i class="bi bi-eye"></i> Voir</a>
-            {% if item.editable and perms.overtime.change_overtime %}
-              <a href="{% url 'overtime:update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
-            {% endif %}
           </span>
         </div>
       </li>

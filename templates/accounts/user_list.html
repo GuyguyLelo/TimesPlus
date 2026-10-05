@@ -20,7 +20,7 @@
         <td>{{ item.get_full_name|default:"—" }}</td>
         <td>{% for group in item.groups.all %}<span class="code-chip">{{ group.name }}</span> {% empty %}—{% endfor %}</td>
         <td>{% if item.is_active %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}</td>
-        <td class="row-actions"><a href="{% url 'accounts:user_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a></td>
+        <td class="row-actions"><a href="{% url 'accounts:user_update' item.pk %}"><i class="bi bi-person-gear"></i> Gérer</a></td>
       </tr>
     {% empty %}<tr><td colspan="5"><i class="bi bi-inbox"></i>Aucun utilisateur.</td></tr>{% endfor %}
   </tbody>

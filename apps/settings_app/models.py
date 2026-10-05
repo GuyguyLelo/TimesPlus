@@ -15,7 +15,7 @@ class SiteSettings(models.Model):
         "devise",
         max_length=10,
         default="CDF",
-        help_text="Libellé monétaire affiché. Le calcul utilise le taux horaire de l'agent.",
+        help_text="Libellé monétaire affiché. Le calcul utilise le barème du grade et de la fonction.",
     )
     adresse = models.TextField("adresse", blank=True)
     email_contact = models.EmailField("e-mail de contact", blank=True)

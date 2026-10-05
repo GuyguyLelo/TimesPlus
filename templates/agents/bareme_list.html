@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Barème{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-end flex-wrap">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker"><a href="{% url 'settings_app:parameters' %}">Paramètres</a></p>
+    <h1>Barème</h1>
+    <p>Taux horaire selon le grade et la fonction. Ce montant est un paramètre de l'administration.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'agents:bareme_create' %}">Ajouter</a>
+</div>
+
+<section class="card ref-panel">
+  {% if baremes %}
+  <ul class="ref-list holiday-list">
+    {% for item in baremes %}
+      <li>
+        <div class="holiday-main">
+          <strong>{{ item.grade }}</strong>
+          <span>{{ item.fonction }}</span>
+          <span class="code-chip">{{ item.taux_horaire|montant }} {{ site_settings.devise }}</span>
+        </div>
+        <div class="ref-side">
+          {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+          <span class="row-actions">
+            <a href="{% url 'agents:bareme_delete' item.pk %}"><i class="bi bi-trash"></i> Supprimer</a>
+          </span>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun barème. Le calcul des heures supplémentaires exige un taux pour le grade et la fonction de l'agent.</p>
+  {% endif %}
+</section>
+{% include "partials/pagination.html" %}
+{% endblock %}

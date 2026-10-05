@@ -6,15 +6,14 @@
   <a class="btn btn-primary" href="{% url 'overtime:type_create' %}">Nouveau type</a>
 </div>
 <div class="card"><table class="table mb-0">
-  <thead><tr><th>Code</th><th>Libellé</th><th>Coefficient</th><th>Actif</th><th></th></tr></thead>
+  <thead><tr><th>Code</th><th>Libellé</th><th>Coefficient</th><th>Actif</th></tr></thead>
   <tbody>
     {% for item in types %}
       <tr>
         <td><span class="code-chip">{{ item.code }}</span></td><td>{{ item.libelle }}</td><td><span class="coef">{{ item.coefficient }}</span></td>
         <td>{% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}</td>
-        <td class="row-actions"><a href="{% url 'overtime:type_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a></td>
       </tr>
-    {% empty %}<tr><td colspan="5"><i class="bi bi-inbox"></i>Aucun type.</td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="4"><i class="bi bi-inbox"></i>Aucun type.</td></tr>{% endfor %}
   </tbody>
 </table></div>
 {% include "partials/pagination.html" %}

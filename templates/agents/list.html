@@ -54,7 +54,7 @@
         </td>
         <td>{{ agent.grade|default:"—" }}</td>
         <td>{{ agent.fonction|default:"—" }}</td>
-        <td>{{ agent.taux_horaire|montant }} {{ site_settings.devise }}</td>
+        <td>{{ agent.taux_bareme|montant }}{% if agent.taux_bareme %} {{ site_settings.devise }}{% endif %}</td>
         <td><span class="state state-{{ agent.statut|lower }}">{{ agent.get_statut_display }}</span></td>
         <td class="row-actions"><a href="{% url 'agents:detail' agent.pk %}"><i class="bi bi-eye"></i> Voir</a></td>
       </tr>

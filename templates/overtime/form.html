@@ -42,6 +42,7 @@
                 <span class="code-chip" id="agent-pick-matricule">{{ form.agent_carte.matricule }}</span>
                 <p id="agent-pick-role">{% if form.agent_carte.grade %}{{ form.agent_carte.grade }}{% endif %}{% if form.agent_carte.grade and form.agent_carte.fonction %} · {% endif %}{% if form.agent_carte.fonction %}{{ form.agent_carte.fonction }}{% endif %}</p>
                 <p id="agent-pick-service">{{ form.agent_carte.service }}</p>
+                <p id="agent-pick-taux">Taux horaire : {{ form.agent_carte.taux }}</p>
               </div>
             </div>
           </div>

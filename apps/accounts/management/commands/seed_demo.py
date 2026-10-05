@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from apps.accounts.access import get_profile
 from apps.accounts.roles import ensure_groups
-from apps.agents.models import Agent, Fonction, Grade
+from apps.agents.models import Agent, Bareme, Fonction, Grade
 from apps.agents.referentiel import ensure_referentiel
 from apps.overtime.models import Holiday, OvertimeRequest, OvertimeRule, OvertimeType, WorkSchedule
 from apps.overtime.services.declaration import enregistrer_declaration
@@ -125,7 +125,6 @@ class Command(BaseCommand):
                     "grade": grade,
                     "fonction": fonction,
                     "email": f"{prenom}.{nom}@heures.local".lower(),
-                    "taux_horaire": Decimal("5000.00"),
                     "statut": Agent.Statut.ACTIF,
                     "actif": True,
                     "date_engagement": timezone.localdate().replace(year=timezone.localdate().year - 5),
@@ -136,6 +135,11 @@ class Command(BaseCommand):
                 agent.grade = grade
                 agent.fonction = fonction
                 agent.save(update_fields=["service", "grade", "fonction", "updated_at"])
+            Bareme.objects.get_or_create(
+                grade=grade,
+                fonction=fonction,
+                defaults={"taux_horaire": Decimal("5000.00"), "actif": True},
+            )
             created[matricule] = agent
         return created
 

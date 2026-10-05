@@ -56,11 +56,6 @@
           </div>
           <div class="ref-side">
             {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
-            {% if perms.overtime.manage_rules %}
-              <span class="row-actions">
-                <a href="{% url 'overtime:schedule_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
-              </span>
-            {% endif %}
           </div>
         </li>
       {% endfor %}

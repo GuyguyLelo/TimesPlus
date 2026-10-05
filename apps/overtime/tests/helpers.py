@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group, User
 
 from apps.accounts.access import get_profile
 from apps.accounts.roles import ensure_groups
-from apps.agents.models import Agent
+from apps.agents.models import Agent, Bareme, Fonction, Grade
 from apps.overtime.models import OvertimeRule, OvertimeType
 from apps.services.models import Service
 from apps.settings_app.models import SiteSettings
@@ -70,7 +70,8 @@ def build_referential():
         prenom="Aline",
         sexe=Agent.Sexe.FEMININ,
         service=dsi,
-        taux_horaire=Decimal("5000"),
+        grade=Grade.objects.get(code="AA2-1"),
+        fonction=Fonction.objects.get(code="AA2"),
     )
     chef_agent = Agent.objects.create(
         matricule="DSI-001",
@@ -78,7 +79,8 @@ def build_referential():
         prenom="Paul",
         sexe=Agent.Sexe.MASCULIN,
         service=dsi,
-        taux_horaire=Decimal("6000"),
+        grade=Grade.objects.get(code="CD-1"),
+        fonction=Fonction.objects.get(code="CD"),
     )
     other = Agent.objects.create(
         matricule="DRH-002",
@@ -86,8 +88,12 @@ def build_referential():
         prenom="Jean",
         sexe=Agent.Sexe.MASCULIN,
         service=drh,
-        taux_horaire=Decimal("4000"),
+        grade=Grade.objects.get(code="DIR"),
+        fonction=Fonction.objects.get(code="DIR"),
     )
+    Bareme.objects.create(grade=agent.grade, fonction=agent.fonction, taux_horaire=Decimal("5000"))
+    Bareme.objects.create(grade=chef_agent.grade, fonction=chef_agent.fonction, taux_horaire=Decimal("6000"))
+    Bareme.objects.create(grade=other.grade, fonction=other.fonction, taux_horaire=Decimal("4000"))
     agent_user = make_user("agent", "AGENT", agent=agent)
     chef_user = make_user("chef", "CHEF_SERVICE", agent=chef_agent, service=dsi)
     rh_user = make_user("rh", "ADMIN_RH", service=drh)
