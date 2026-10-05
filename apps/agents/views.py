@@ -6,6 +6,7 @@ from django.db.models import OuterRef, ProtectedError, Q, Subquery
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
@@ -120,13 +121,24 @@ class AgentDetailView(AppPermissionMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         declarations = []
+        mois_label = ""
         if self.request.user.has_perm("overtime.view_overtime"):
+            from apps.overtime.forms import _NOMS_MOIS
             from apps.overtime.selectors import overtime_for_user
 
+            today = timezone.localdate()
+            mois_label = f"{_NOMS_MOIS[today.month - 1]} {today.year}"
             declarations = list(
-                overtime_for_user(self.request.user).filter(agent=self.object).order_by("-date_travail", "-pk")[:8]
+                overtime_for_user(self.request.user)
+                .filter(
+                    agent=self.object,
+                    date_travail__year=today.year,
+                    date_travail__month=today.month,
+                )
+                .order_by("-date_travail", "-pk")
             )
         context["declarations"] = declarations
+        context["declarations_mois"] = mois_label
         return context
 
 

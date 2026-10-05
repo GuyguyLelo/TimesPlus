@@ -262,7 +262,13 @@
     }
     role.textContent = parts.join(" · ");
     service.textContent = item.service || "";
-    taux.textContent = "Taux horaire : " + (item.taux || "Aucun barème");
+    taux.textContent = "";
+    var label = document.createTextNode("Taux horaire : ");
+    var amount = document.createElement("span");
+    amount.className = "montant";
+    amount.textContent = item.taux || "Aucun barème";
+    taux.appendChild(label);
+    taux.appendChild(amount);
     pick.hidden = false;
   }
 

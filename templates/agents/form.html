@@ -28,11 +28,11 @@
         <h2>Identité</h2>
         <div class="field-grid">
           {% include "partials/one_field.html" with field=form.matricule %}
-          {% include "partials/one_field.html" with field=form.sexe %}
           {% include "partials/one_field.html" with field=form.nom %}
           {% include "partials/one_field.html" with field=form.postnom %}
           {% include "partials/one_field.html" with field=form.prenom %}
           {% include "partials/one_field.html" with field=form.date_naissance %}
+          {% include "partials/one_field.html" with field=form.sexe %}
           {% include "partials/one_field.html" with field=form.email %}
           {% include "partials/one_field.html" with field=form.telephone %}
         </div>
@@ -41,7 +41,16 @@
       <section class="form-section">
         <h2>Affectation</h2>
         <div class="field-grid">
-          {% include "partials/one_field.html" with field=form.service %}
+          <div class="field is-wide service-field{% if form.service.errors %} is-invalid{% endif %}">
+            <div class="service-picker">
+              {{ form.service }}
+              <p class="service-path" id="service-path">Aucun service choisi.</p>
+              <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#service-modal">
+                <i class="bi bi-diagram-3"></i> Service d'affectation
+              </button>
+            </div>
+            {% for error in form.service.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
           {% include "partials/one_field.html" with field=form.grade %}
           {% include "partials/one_field.html" with field=form.fonction %}
           {% include "partials/one_field.html" with field=form.date_engagement %}
@@ -58,6 +67,24 @@
     </form>
   </div>
 </div>
+<div class="modal fade" id="service-modal" tabindex="-1" aria-labelledby="service-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="service-modal-title">Service d'affectation</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control" id="service-query" type="search" placeholder="Code ou nom" autocomplete="off">
+        <div class="service-tree" id="service-tree"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{ form.service_arbre|json_script:"service-arbre" }}
 {% endblock %}
 {% block scripts %}
 <script>
@@ -89,6 +116,164 @@
     if (input.files && input.files.length) return;
     box.hidden = true;
   });
+})();
+</script>
+<script>
+(function () {
+  var dataEl = document.getElementById("service-arbre");
+  var root = document.getElementById("service-tree");
+  var select = document.getElementById("id_service");
+  var query = document.getElementById("service-query");
+  var path = document.getElementById("service-path");
+  if (!dataEl || !root || !select) return;
+  var tree = JSON.parse(dataEl.textContent);
+  var byId = {};
+
+  function index(nodes) {
+    nodes.forEach(function (node) {
+      byId[String(node.id)] = node;
+      index(node.children || []);
+    });
+  }
+
+  function containsSelected(node) {
+    if (String(select.value) === String(node.id)) return true;
+    return (node.children || []).some(containsSelected);
+  }
+
+  function lineage(id) {
+    var names = [];
+    var node = byId[String(id)];
+    var guard = 0;
+    while (node && guard < 24) {
+      names.unshift(node.code);
+      node = node.parent ? byId[String(node.parent)] : null;
+      guard += 1;
+    }
+    return names.join(" › ");
+  }
+
+  function paintPath() {
+    if (!path) return;
+    var node = byId[String(select.value)];
+    path.textContent = node
+      ? lineage(node.id) + " — " + node.nom
+      : "Aucun service choisi.";
+  }
+
+  function markSelected() {
+    root.querySelectorAll(".service-row").forEach(function (row) {
+      row.classList.toggle("is-selected", row.dataset.id === String(select.value));
+    });
+    paintPath();
+  }
+
+  function restoreOpen() {
+    root.querySelectorAll(".service-node").forEach(function (item) {
+      item.classList.remove("is-hidden");
+      item.classList.toggle("is-collapsed", item.dataset.open !== "1");
+      var caret = item.querySelector(":scope > .service-row .service-caret");
+      if (caret) caret.setAttribute("aria-expanded", item.dataset.open === "1" ? "true" : "false");
+    });
+  }
+
+  function build(nodes, depth) {
+    var ul = document.createElement("ul");
+    ul.className = depth ? "service-children" : "service-nodes";
+    nodes.forEach(function (node) {
+      var kids = node.children || [];
+      var open = depth < 1 || containsSelected(node);
+      var li = document.createElement("li");
+      li.className = "service-node" + (open ? "" : " is-collapsed");
+      li.dataset.id = String(node.id);
+      li.dataset.open = open ? "1" : "0";
+      var row = document.createElement("div");
+      row.className = "service-row";
+      row.dataset.id = String(node.id);
+      var caret = document.createElement("button");
+      caret.type = "button";
+      caret.className = "service-caret" + (kids.length ? "" : " is-empty");
+      caret.setAttribute("aria-label", kids.length ? "Afficher les services rattachés" : "");
+      caret.setAttribute("aria-expanded", open ? "true" : "false");
+      if (kids.length) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-chevron-right";
+        icon.setAttribute("aria-hidden", "true");
+        caret.appendChild(icon);
+        caret.addEventListener("click", function () {
+          var collapsed = li.classList.toggle("is-collapsed");
+          caret.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        });
+      }
+      var choice = document.createElement("button");
+      choice.type = "button";
+      choice.className = "service-choice";
+      var badge = document.createElement("span");
+      badge.className = "niveau niveau-" + node.niveau;
+      badge.textContent = node.niveau_label;
+      var code = document.createElement("strong");
+      code.textContent = node.code;
+      var nom = document.createElement("span");
+      nom.className = "service-nom";
+      nom.textContent = node.nom;
+      choice.appendChild(badge);
+      choice.appendChild(code);
+      choice.appendChild(nom);
+      choice.addEventListener("click", function () {
+        select.value = String(node.id);
+        markSelected();
+        var modalEl = document.getElementById("service-modal");
+        if (modalEl && window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      });
+      row.appendChild(caret);
+      row.appendChild(choice);
+      li.appendChild(row);
+      if (kids.length) li.appendChild(build(kids, depth + 1));
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function matches(node, text) {
+    return (node.code + " " + node.nom).toLowerCase().indexOf(text) >= 0;
+  }
+
+  function filterTree(nodes, text) {
+    var any = false;
+    nodes.forEach(function (node) {
+      var item = root.querySelector('.service-node[data-id="' + node.id + '"]');
+      var childHit = filterTree(node.children || [], text);
+      var hit = matches(node, text) || childHit;
+      item.classList.toggle("is-hidden", !hit);
+      if (hit) {
+        item.classList.remove("is-collapsed");
+        var caret = item.querySelector(":scope > .service-row .service-caret");
+        if (caret) caret.setAttribute("aria-expanded", "true");
+      }
+      any = any || hit;
+    });
+    return any;
+  }
+
+  index(tree);
+  root.appendChild(build(tree, 0));
+  markSelected();
+  var modalEl = document.getElementById("service-modal");
+  if (modalEl && query) {
+    modalEl.addEventListener("shown.bs.modal", function () {
+      query.focus();
+    });
+  }
+  if (query) {
+    query.addEventListener("input", function () {
+      var text = query.value.trim().toLowerCase();
+      if (!text) {
+        restoreOpen();
+        return;
+      }
+      filterTree(tree, text);
+    });
+  }
 })();
 </script>
 {% endblock %}

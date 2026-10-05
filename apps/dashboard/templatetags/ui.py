@@ -1,4 +1,6 @@
 from django import template
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from apps.overtime.formatting import format_minutes, format_montant
 
@@ -20,8 +22,11 @@ def duree(value):
 
 
 @register.filter
-def montant(value):
-    return format_montant(value)
+def montant(value, devise=""):
+    text = format_montant(value)
+    if devise and text != "—":
+        text = f"{text} {devise}"
+    return mark_safe(f'<span class="montant">{escape(text)}</span>')
 
 
 @register.filter

@@ -24,7 +24,7 @@
   <div class="fact"><span>Durée</span><strong>{{ declaration.duree_minutes|duree }}</strong></div>
   <div class="fact"><span>Type</span><strong>{{ declaration.type_heure.libelle }}</strong></div>
   <div class="fact"><span>Règle</span><strong>{{ declaration.regle_appliquee|default:"—" }}</strong><em class="fact-note">Coefficient {{ declaration.coefficient_applique }}</em></div>
-  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant }} {{ site_settings.devise }}</strong></div>
+  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant:site_settings.devise }}</strong></div>
   <div class="fact"><span>Étape</span><strong>{{ declaration.current_step|default:"—" }}</strong></div>
   <div class="fact is-wide"><span>Motif</span><strong>{{ declaration.motif_libelle }}</strong></div>
   <div class="fact is-wide"><span>Observation</span><strong>{{ declaration.observation|default:"—" }}</strong></div>

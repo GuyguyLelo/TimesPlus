@@ -55,12 +55,12 @@
   <div class="fact"><span>Grade</span><strong>{{ agent.grade|default:"—" }}</strong>{% if agent.grade %}<em class="fact-note">{{ agent.grade.get_categorie_display }}</em>{% endif %}</div>
   <div class="fact"><span>Fonction</span><strong>{{ agent.fonction|default:"—" }}</strong>{% if agent.fonction %}<em class="fact-note">{{ agent.fonction.get_famille_display }}</em>{% endif %}</div>
   <div class="fact"><span>Date d'engagement</span><strong>{{ agent.date_engagement|date:"d/m/Y"|default:"—" }}</strong></div>
-  <div class="fact"><span>Taux horaire</span><strong>{{ agent.taux_applique|montant }}{% if agent.taux_applique %} {{ site_settings.devise }}{% endif %}</strong></div>
+  <div class="fact"><span>Taux horaire</span><strong>{{ agent.taux_applique|montant:site_settings.devise }}</strong></div>
 </div>
 
 {% if perms.overtime.view_overtime %}
 <div class="card ref-panel">
-  <header class="ref-head"><h2>Dernières déclarations</h2></header>
+  <header class="ref-head"><h2>Déclarations — {{ declarations_mois }}</h2></header>
   <div class="table-responsive">
     <table class="table mb-0">
       <thead><tr><th>Date</th><th>Durée</th><th>Type</th><th>Statut</th><th>Montant</th><th></th></tr></thead>
@@ -71,11 +71,11 @@
             <td>{{ item.duree_minutes|duree }}</td>
             <td><span class="code-chip">{{ item.type_heure.code }}</span></td>
             <td><span class="badge text-bg-{{ item.statut|statut_badge }}">{{ item.get_statut_display }}</span></td>
-            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+            <td>{{ item.montant_estime|montant:site_settings.devise }}</td>
             <td class="row-actions"><a href="{% url 'overtime:detail' item.pk %}"><i class="bi bi-eye"></i> Voir</a></td>
           </tr>
         {% empty %}
-          <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune déclaration pour cet agent.</td></tr>
+          <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune déclaration pour {{ declarations_mois }}.</td></tr>
         {% endfor %}
       </tbody>
     </table>

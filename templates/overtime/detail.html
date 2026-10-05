@@ -33,7 +33,7 @@
   <div class="fact"><span>Début</span><strong>{{ declaration.heure_debut|time:"H:i" }}</strong></div>
   <div class="fact"><span>Fin</span><strong>{{ declaration.heure_fin|time:"H:i" }}</strong></div>
   <div class="fact"><span>Durée</span><strong>{{ declaration.duree_minutes|duree }}</strong></div>
-  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant }} {{ site_settings.devise }}</strong></div>
+  <div class="fact"><span>Montant estimé</span><strong>{{ declaration.montant_estime|montant:site_settings.devise }}</strong></div>
   <div class="fact"><span>Type</span><strong>{{ declaration.type_heure.libelle }}</strong></div>
   <div class="fact"><span>Règle</span><strong>{{ declaration.regle_appliquee|default:"—" }}</strong></div>
   <div class="fact"><span>Coefficient</span><strong><span class="coef">{{ declaration.coefficient_applique }}</span></strong></div>

@@ -41,7 +41,7 @@
   <article class="card stat-card">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
-      <div><p>Montant estimé</p><strong>{{ totaux.montant|montant }} <span>{{ site_settings.devise }}</span></strong></div>
+      <div><p>Montant estimé</p><strong>{{ totaux.montant|montant:site_settings.devise }}</strong></div>
     </div>
   </article>
 </div>
@@ -76,7 +76,7 @@
               {{ item.motif_libelle }}
               {% if item.observation %}<div class="small text-secondary">{{ item.observation }}</div>{% endif %}
             </td>
-            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+            <td>{{ item.montant_estime|montant:site_settings.devise }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune heure supplémentaire pour cette période.</td></tr>
@@ -106,7 +106,7 @@
               <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
               <td>{{ row.nombre }}</td>
               <td>{{ row.minutes|duree }}</td>
-              <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+              <td>{{ row.montant|montant:site_settings.devise }}</td>
             </tr>
           {% empty %}
             <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune heure supplémentaire pour ce mois.</td></tr>
@@ -153,7 +153,7 @@
 <div class="row g-3 mb-3">
   <div class="col-md-4"><div class="card stat-card"><div class="card-body"><p>Demandes</p><strong>{{ totaux.nombre }}</strong></div></div></div>
   <div class="col-md-4"><div class="card stat-card"><div class="card-body"><p>Durée</p><strong>{{ duree }}</strong></div></div></div>
-  <div class="col-md-4"><div class="card stat-card"><div class="card-body"><p>Montant estimé</p><strong>{{ totaux.montant|montant }} {{ site_settings.devise }}</strong></div></div></div>
+  <div class="col-md-4"><div class="card stat-card"><div class="card-body"><p>Montant estimé</p><strong>{{ totaux.montant|montant:site_settings.devise }}</strong></div></div></div>
 </div>
 <div class="card"><div class="table-responsive"><table class="table table-sm mb-0">
   <thead><tr><th>Matricule</th><th>Agent</th><th>Service</th><th>Date</th><th>Durée</th><th>Type</th><th>Statut</th><th>Montant</th></tr></thead>
@@ -167,7 +167,7 @@
         <td>{{ item.duree_minutes|duree }}</td>
         <td><span class="code-chip">{{ item.type_heure.code }}</span></td>
         <td><span class="badge text-bg-{{ item.statut|statut_badge }}">{{ item.get_statut_display }}</span></td>
-        <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+        <td>{{ item.montant_estime|montant:site_settings.devise }}</td>
       </tr>
     {% empty %}<tr><td colspan="8">Aucune donnée pour ces filtres.</td></tr>{% endfor %}
   </tbody>

@@ -4,9 +4,39 @@ from django.db.models import Q
 
 from apps.accounts.form_mixins import BootstrapFormMixin
 from apps.agents.models import Agent, Bareme, Fonction, Grade
+from apps.services.models import Service
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
 PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def _arbre_services(queryset):
+    nodes = {}
+    for item in queryset:
+        nodes[item.pk] = {
+            "id": item.pk,
+            "code": item.code,
+            "nom": item.nom,
+            "niveau": item.niveau,
+            "niveau_label": item.get_niveau_display(),
+            "parent": item.service_parent_id,
+            "children": [],
+        }
+    roots = []
+    for node in nodes.values():
+        parent = nodes.get(node["parent"])
+        if parent is None:
+            roots.append(node)
+        else:
+            parent["children"].append(node)
+
+    def sort_tree(items):
+        items.sort(key=lambda row: (row["code"], row["nom"]))
+        for row in items:
+            sort_tree(row["children"])
+
+    sort_tree(roots)
+    return roots
 
 
 def _kept(model, current_id):
@@ -65,6 +95,13 @@ class AgentForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["fonction"].empty_label = "Choisir une fonction"
         self.fields["grade"].label_from_instance = lambda item: f"{item.categorie} · {item}"
         self.fields["fonction"].label_from_instance = lambda item: f"{item.get_famille_display()} · {item.libelle}"
+        services = Service.objects.filter(actif=True)
+        if self.instance.service_id:
+            services = services | Service.objects.filter(pk=self.instance.service_id)
+        self.fields["service"].queryset = services.distinct()
+        self.fields["service"].label = "Service d'affectation"
+        self.fields["service"].empty_label = "Choisir un service"
+        self.service_arbre = _arbre_services(self.fields["service"].queryset)
 
     def clean_photo(self):
         return validate_agent_photo(self.cleaned_data.get("photo"))

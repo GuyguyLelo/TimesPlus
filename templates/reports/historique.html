@@ -31,7 +31,7 @@
   <article class="card stat-card">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
-      <div><p>Montant estimé</p><strong>{{ totaux.montant|montant }} <span>{{ site_settings.devise }}</span></strong></div>
+      <div><p>Montant estimé</p><strong>{{ totaux.montant|montant:site_settings.devise }}</strong></div>
     </div>
   </article>
 </div>
@@ -56,7 +56,7 @@
             <td><span class="code-chip">{{ item.agent.service.code }}</span></td>
             <td>{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}</td>
             <td>{{ item.duree_minutes|duree }}</td>
-            <td>{{ item.montant_estime|montant }} {{ site_settings.devise }}</td>
+            <td>{{ item.montant_estime|montant:site_settings.devise }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7"><i class="bi bi-inbox"></i>Aucune heure supplémentaire payée pour ce mois.</td></tr>
@@ -85,7 +85,7 @@
             <td>{{ row.agents }}</td>
             <td>{{ row.nombre }}</td>
             <td>{{ row.minutes|duree }}</td>
-            <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+            <td>{{ row.montant|montant:site_settings.devise }}</td>
             <td class="row-actions">
               {% if mois_choisi == row.mois %}
                 <a href="{% url 'reports:historical' %}">Fermer</a>
@@ -120,7 +120,7 @@
             <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
             <td>{{ row.nombre }}</td>
             <td>{{ row.minutes|duree }}</td>
-            <td>{{ row.montant|montant }} {{ site_settings.devise }}</td>
+            <td>{{ row.montant|montant:site_settings.devise }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune heure supplémentaire en {{ annee }}.</td></tr>

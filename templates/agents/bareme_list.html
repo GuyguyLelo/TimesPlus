@@ -19,7 +19,7 @@
         <div class="holiday-main">
           <strong>{{ item.grade }}</strong>
           <span>{{ item.fonction }}</span>
-          <span class="code-chip">{{ item.taux_horaire|montant }} {{ site_settings.devise }}</span>
+          <span class="code-chip">{{ item.taux_horaire|montant:site_settings.devise }}</span>
         </div>
         <div class="ref-side">
           {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}

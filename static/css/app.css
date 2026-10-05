@@ -397,6 +397,14 @@ button.nav-parent {
   letter-spacing: -.03em;
   color: var(--blue-deep);
 }
+.montant,
+.stat-card strong .montant,
+.rapport-stats .stat-card strong .montant,
+.fact strong .montant,
+.code-chip .montant {
+  font-weight: 700;
+  color: #007fff;
+}
 .stat-icon {
   width: 2.4rem;
   height: 2.4rem;
@@ -823,8 +831,18 @@ dl.row > dd {
   width: 210px;
   max-width: 78%;
   height: auto;
-  margin: 0 auto .65rem;
+  margin: 0 auto .55rem;
 }
+.auth-org {
+  margin: 0 0 .55rem;
+  color: var(--blue-deep);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+.auth-org span { color: #007fff; }
 .auth-title {
   margin: 0;
   color: var(--blue-deep);
@@ -1107,6 +1125,79 @@ a.filiation-card:hover {
 .agent-form-card .field-check { padding: .5rem .7rem .5rem 2rem; }
 .agent-form-card .form-actions { justify-content: center; margin-top: .75rem; padding-top: .7rem; }
 .saisie-note { margin: .35rem 0 0; color: #5c6775; font-size: .82rem; }
+.service-picker { position: relative; }
+.service-picker > select {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.service-path {
+  margin: 0 0 .4rem;
+  color: #0c3058;
+  font-size: .82rem;
+  font-weight: 700;
+}
+.service-tree {
+  max-height: min(60vh, 460px);
+  margin-top: .65rem;
+  overflow: auto;
+  border: 1px solid #d5e0ec;
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, #007fff 0 34%, #f7d618 34% 67%, #ce1021 67% 100%) top / 100% 3px no-repeat,
+    #f8fbff;
+}
+.service-nodes,
+.service-children { list-style: none; margin: 0; padding: 0; }
+.service-children { margin-left: .7rem; border-left: 2px solid rgba(0, 127, 255, .28); }
+.service-node.is-collapsed > .service-children,
+.service-node.is-hidden { display: none; }
+.service-row { display: flex; align-items: center; min-width: 0; }
+.service-caret,
+.service-choice { border: 0; background: transparent; color: inherit; }
+.service-caret {
+  width: 1.6rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  color: #5c6775;
+  cursor: pointer;
+}
+.service-caret.is-empty { visibility: hidden; cursor: default; }
+.service-caret .bi { display: inline-block; transition: transform .15s ease; }
+.service-node:not(.is-collapsed) > .service-row .service-caret .bi { transform: rotate(90deg); }
+.service-choice {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  min-width: 0;
+  padding: .32rem .55rem .32rem 0;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.service-choice:hover { background: rgba(0, 127, 255, .08); }
+.service-choice .service-nom {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #3d4a5c;
+  font-size: .82rem;
+}
+.service-choice strong { flex: 0 0 auto; font-size: .75rem; }
+.service-row.is-selected > .service-choice {
+  background: #0c3058;
+  color: white;
+}
+.service-row.is-selected > .service-choice .service-nom { color: rgba(255, 255, 255, .84); }
+.service-row.is-selected > .service-choice .niveau { background: rgba(255, 255, 255, .16); color: white; }
 .is-locked {
   background: #f4f7fb !important;
   color: #1e3a56;
