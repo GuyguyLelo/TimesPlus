@@ -52,7 +52,7 @@
   <div class="fact"><span>Date de naissance</span><strong>{{ agent.date_naissance|date:"d/m/Y"|default:"—" }}</strong></div>
   <div class="fact"><span>E-mail</span><strong>{{ agent.email|default:"—" }}</strong></div>
   <div class="fact"><span>Téléphone</span><strong>{{ agent.telephone|default:"—" }}</strong></div>
-  <div class="fact"><span>Grade</span><strong>{{ agent.grade|default:"—" }}</strong>{% if agent.grade %}<em class="fact-note">{{ agent.grade.get_categorie_display }}</em>{% endif %}</div>
+  <div class="fact"><span>Grade</span><strong>{% if agent.grade %}{{ agent.grade.libelle }}{% if agent.grade.abreviation %} ({{ agent.grade.abreviation }}){% endif %}{% else %}—{% endif %}</strong>{% if agent.grade %}<em class="fact-note">{{ agent.grade.get_categorie_display }}</em>{% endif %}</div>
   <div class="fact"><span>Fonction</span><strong>{{ agent.fonction|default:"—" }}</strong>{% if agent.fonction %}<em class="fact-note">{{ agent.fonction.get_famille_display }}</em>{% endif %}</div>
   <div class="fact"><span>Date d'engagement</span><strong>{{ agent.date_engagement|date:"d/m/Y"|default:"—" }}</strong></div>
   <div class="fact"><span>Taux horaire</span><strong>{{ agent.taux_applique|montant:site_settings.devise }}</strong></div>

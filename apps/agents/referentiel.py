@@ -8,23 +8,23 @@ standards du décret n° 15/043 du 28 décembre 2015, et emplois de la loi n° 1
 """
 
 GRADES = [
-    {"code": "SG", "libelle": "Secrétaire général", "categorie": "A", "echelon": None, "ordre": 10},
-    {"code": "DG", "libelle": "Directeur général", "categorie": "A", "echelon": None, "ordre": 20},
-    {"code": "DIR", "libelle": "Directeur", "categorie": "A", "echelon": None, "ordre": 30},
-    {"code": "CD-2", "libelle": "Chef de division", "categorie": "B", "echelon": 2, "ordre": 40},
-    {"code": "CD-1", "libelle": "Chef de division", "categorie": "B", "echelon": 1, "ordre": 41},
-    {"code": "CB-2", "libelle": "Chef de bureau", "categorie": "B", "echelon": 2, "ordre": 50},
-    {"code": "CB-1", "libelle": "Chef de bureau", "categorie": "B", "echelon": 1, "ordre": 51},
-    {"code": "AA1-2", "libelle": "Attaché d'administration de 1ère classe", "categorie": "C", "echelon": 2, "ordre": 60},
-    {"code": "AA1-1", "libelle": "Attaché d'administration de 1ère classe", "categorie": "C", "echelon": 1, "ordre": 61},
-    {"code": "AA2-2", "libelle": "Attaché d'administration de 2ème classe", "categorie": "C", "echelon": 2, "ordre": 70},
-    {"code": "AA2-1", "libelle": "Attaché d'administration de 2ème classe", "categorie": "C", "echelon": 1, "ordre": 71},
-    {"code": "AG1-2", "libelle": "Agent d'administration de 1ère classe", "categorie": "C", "echelon": 2, "ordre": 80},
-    {"code": "AG1-1", "libelle": "Agent d'administration de 1ère classe", "categorie": "C", "echelon": 1, "ordre": 81},
-    {"code": "AG2", "libelle": "Agent d'administration de 2ème classe", "categorie": "D", "echelon": None, "ordre": 90},
-    {"code": "AUX1", "libelle": "Agent auxiliaire de 1ère classe", "categorie": "D", "echelon": None, "ordre": 100},
-    {"code": "AUX2", "libelle": "Agent auxiliaire de 2ème classe", "categorie": "D", "echelon": None, "ordre": 110},
-    {"code": "HUIS", "libelle": "Huissier", "categorie": "D", "echelon": None, "ordre": 120},
+    {"code": "SG", "abreviation": "SG", "libelle": "Secrétaire général", "categorie": "A", "echelon": None, "ordre": 10},
+    {"code": "DG", "abreviation": "DG", "libelle": "Directeur général", "categorie": "A", "echelon": None, "ordre": 20},
+    {"code": "DIR", "abreviation": "DIR", "libelle": "Directeur", "categorie": "A", "echelon": None, "ordre": 30},
+    {"code": "CD-2", "abreviation": "CD", "libelle": "Chef de division", "categorie": "B", "echelon": 2, "ordre": 40},
+    {"code": "CD-1", "abreviation": "CD", "libelle": "Chef de division", "categorie": "B", "echelon": 1, "ordre": 41},
+    {"code": "CB-2", "abreviation": "CB", "libelle": "Chef de bureau", "categorie": "B", "echelon": 2, "ordre": 50},
+    {"code": "CB-1", "abreviation": "CB", "libelle": "Chef de bureau", "categorie": "B", "echelon": 1, "ordre": 51},
+    {"code": "AA1-2", "abreviation": "ATA1", "libelle": "Attaché d'administration de 1ère classe", "categorie": "C", "echelon": 2, "ordre": 60},
+    {"code": "AA1-1", "abreviation": "ATA1", "libelle": "Attaché d'administration de 1ère classe", "categorie": "C", "echelon": 1, "ordre": 61},
+    {"code": "AA2-2", "abreviation": "ATA2", "libelle": "Attaché d'administration de 2ème classe", "categorie": "C", "echelon": 2, "ordre": 70},
+    {"code": "AA2-1", "abreviation": "ATA2", "libelle": "Attaché d'administration de 2ème classe", "categorie": "C", "echelon": 1, "ordre": 71},
+    {"code": "AG1-2", "abreviation": "AGA1", "libelle": "Agent d'administration de 1ère classe", "categorie": "C", "echelon": 2, "ordre": 80},
+    {"code": "AG1-1", "abreviation": "AGA1", "libelle": "Agent d'administration de 1ère classe", "categorie": "C", "echelon": 1, "ordre": 81},
+    {"code": "AG2", "abreviation": "AGA2", "libelle": "Agent d'administration de 2ème classe", "categorie": "D", "echelon": None, "ordre": 90},
+    {"code": "AUX1", "abreviation": "AUX1", "libelle": "Agent auxiliaire de 1ère classe", "categorie": "D", "echelon": None, "ordre": 100},
+    {"code": "AUX2", "abreviation": "AUX2", "libelle": "Agent auxiliaire de 2ème classe", "categorie": "D", "echelon": None, "ordre": 110},
+    {"code": "HUIS", "abreviation": "HUIS", "libelle": "Huissier", "categorie": "D", "echelon": None, "ordre": 120},
 ]
 
 FONCTIONS = [
@@ -58,7 +58,10 @@ def ensure_referentiel(sender=None, **kwargs):
     from apps.agents.models import Fonction, Grade
 
     for row in GRADES:
-        Grade.objects.update_or_create(code=row["code"], defaults={key: value for key, value in row.items() if key != "code"})
+        Grade.objects.update_or_create(
+            code=row["code"],
+            defaults={key: value for key, value in row.items() if key != "code"},
+        )
     for row in FONCTIONS:
         Fonction.objects.update_or_create(
             code=row["code"],

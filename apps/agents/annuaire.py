@@ -55,15 +55,24 @@ def echelon(service):
 
 
 def _tri_agent(agent):
-    return (_clef(agent.nom), _clef(agent.postnom), _clef(agent.prenom), _clef(agent.matricule))
+    rang = agent.ordre if agent.ordre is not None else 10**9
+    return (rang, _clef(agent.nom), _clef(agent.postnom), _clef(agent.prenom), _clef(agent.matricule))
 
 
 def _tri_unite(unite):
     return _clef(unite.nom) if unite is not None else ""
 
 
+def _rang_feuille(feuille):
+    valeurs = [agent.ordre for agent in feuille["agents"] if agent.ordre is not None]
+    return min(valeurs) if valeurs else 10**9
+
+
 def regrouper(agents):
-    """Regroupe les agents par direction, division et bureau."""
+    """Regroupe les agents par direction, division et bureau.
+
+    L'ordre déclaré sur l'agent prime. Sans ordre, le tri reste alphabétique.
+    """
     feuilles = {}
     for agent in agents:
         direction, milieu, bureau = echelon(agent.service)
@@ -81,7 +90,12 @@ def regrouper(agents):
         feuille["agents"].sort(key=_tri_agent)
     ordre = sorted(
         feuilles.values(),
-        key=lambda item: (_tri_unite(item["direction"]), _tri_unite(item["milieu"]), _tri_unite(item["bureau"])),
+        key=lambda item: (
+            _rang_feuille(item),
+            _tri_unite(item["direction"]),
+            _tri_unite(item["milieu"]),
+            _tri_unite(item["bureau"]),
+        ),
     )
     directions = []
     par_direction = {}
@@ -125,6 +139,12 @@ def _nombre(nombre, singulier, pluriel):
     return f"{nombre} {singulier if nombre == 1 else pluriel}"
 
 
+def _abreviation_grade(agent):
+    if not agent.grade_id:
+        return "—"
+    return agent.grade.abreviation or str(agent.grade)
+
+
 def _effectif_reparti(personnes):
     cadres, autres = repartition(personnes)
     return f"{_nombre(cadres, 'cadre', 'cadres')}, {_nombre(autres, 'agent', 'agents')}"
@@ -165,7 +185,7 @@ def _rubrique(styles, largeur, texte, niveau, effectif):
 
 
 def build_annuaire_pdf(agents, *, site, genere_le):
-    """PDF de la liste du personnel, triée par nom dans chaque bureau."""
+    """PDF de la liste du personnel, dans l'ordre déclaré puis par nom."""
     buffer = BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -229,8 +249,7 @@ def build_annuaire_pdf(agents, *, site, genere_le):
                     [
                         escape(agent.nom_complet),
                         escape(agent.matricule),
-                        escape(str(agent.grade) if agent.grade_id else "—"),
-                        escape(str(agent.fonction) if agent.fonction_id else "—"),
+                        escape(_abreviation_grade(agent)),
                     ]
                     for agent in personnes
                 ]
@@ -238,9 +257,9 @@ def build_annuaire_pdf(agents, *, site, genere_le):
                 story.append(
                     _data_table(
                         fiche,
-                        ["Nom", "Matricule", "Grade", "Fonction"],
+                        ["Nom", "Matricule", "Grade"],
                         lignes,
-                        [70 * mm, 32 * mm, 40 * mm, largeur - 142 * mm],
+                        [largeur - 58 * mm, 32 * mm, 26 * mm],
                     )
                 )
                 story.append(Spacer(1, 2 * mm))

@@ -22,7 +22,10 @@
       <ul class="ref-list">
         {% for item in group.list %}
           <li>
-            <strong>{{ item.libelle }}</strong>
+            <span class="ref-main">
+              {% if item.abreviation %}<span class="grade-code">{{ item.abreviation }}</span>{% endif %}
+              <strong>{{ item.libelle }}</strong>
+            </span>
             {% if item.echelon %}<span class="echelon echelon-{{ item.echelon }}">Échelon {{ item.echelon }}</span>{% else %}<span class="echelon echelon-none">Sans échelon</span>{% endif %}
           </li>
         {% endfor %}

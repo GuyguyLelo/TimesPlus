@@ -93,7 +93,9 @@ class AgentForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["fonction"].queryset = _kept(Fonction, self.instance.fonction_id)
         self.fields["grade"].empty_label = "Choisir un grade"
         self.fields["fonction"].empty_label = "Choisir une fonction"
-        self.fields["grade"].label_from_instance = lambda item: f"{item.categorie} · {item}"
+        self.fields["grade"].label_from_instance = lambda item: (
+            f"{item.abreviation} · {item}" if item.abreviation else f"{item.categorie} · {item}"
+        )
         self.fields["fonction"].label_from_instance = lambda item: f"{item.get_famille_display()} · {item.libelle}"
         services = Service.objects.filter(actif=True)
         if self.instance.service_id:
@@ -132,7 +134,9 @@ class BaremeForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["fonction"].queryset = _kept(Fonction, self.instance.fonction_id)
         self.fields["grade"].empty_label = "Choisir un grade"
         self.fields["fonction"].empty_label = "Choisir une fonction"
-        self.fields["grade"].label_from_instance = lambda item: f"{item.categorie} · {item}"
+        self.fields["grade"].label_from_instance = lambda item: (
+            f"{item.abreviation} · {item}" if item.abreviation else f"{item.categorie} · {item}"
+        )
         self.fields["fonction"].label_from_instance = lambda item: f"{item.get_famille_display()} · {item.libelle}"
 
     def clean_taux_horaire(self):

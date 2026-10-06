@@ -1590,6 +1590,18 @@ a.filiation-card:hover {
 .niveau-POSTE { background: #e5f6ea; color: #146c43; }
 .ref-main .row-title { color: #10283f; }
 .ref-side { display: flex; align-items: center; gap: .55rem; flex: 0 0 auto; }
+.grade-code {
+  flex: 0 0 auto;
+  min-width: 3.1rem;
+  padding: .16rem .45rem;
+  border-radius: 6px;
+  background: #0c3058;
+  color: white;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-align: center;
+}
 .echelon {
   flex: 0 0 auto;
   padding: .16rem .5rem;

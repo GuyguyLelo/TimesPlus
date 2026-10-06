@@ -89,6 +89,21 @@ class AnnuaireTests(TestCase):
         bureau = arbre[0]["milieux"][0]["bureaux"][0]
         self.assertEqual(bureau["unite"].nom, "Bureau des états")
         self.assertEqual([agent.nom for agent in bureau["agents"]], ["AMANI", "ZOLA"])
+
+    def test_declared_order_overrides_the_alphabetical_sort(self):
+        Agent.objects.filter(matricule="PDF-Z").update(ordre=1)
+        Agent.objects.filter(matricule="PDF-A").update(ordre=2)
+        Agent.objects.filter(matricule="PDF-B").update(ordre=0)
+        agents = Agent.objects.filter(matricule__startswith="PDF-").select_related(
+            "service",
+            "service__service_parent",
+            "service__service_parent__service_parent",
+            "service__service_parent__service_parent__service_parent",
+        )
+        arbre = regrouper(agents)
+        self.assertEqual([item["unite"].nom for item in arbre], ["Direction du budget", "Direction des achats"])
+        bureau = arbre[1]["milieux"][0]["bureaux"][0]
+        self.assertEqual([agent.nom for agent in bureau["agents"]], ["ZOLA", "AMANI"])
         direction, milieu, unite = echelon(self.bureau)
         self.assertEqual(direction.nom, "Direction des achats")
         self.assertEqual(milieu.nom, "Division de la paie")

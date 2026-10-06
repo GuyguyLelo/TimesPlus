@@ -33,12 +33,23 @@ FONCTION_MAP = {
 
 
 def seed_and_map(apps, schema_editor):
-    from apps.agents.referentiel import ensure_referentiel
+    from apps.agents.referentiel import FONCTIONS, GRADES
 
-    ensure_referentiel()
     Agent = apps.get_model("agents", "Agent")
     Grade = apps.get_model("agents", "Grade")
     Fonction = apps.get_model("agents", "Fonction")
+    grade_fields = {field.name for field in Grade._meta.fields}
+    fonction_fields = {field.name for field in Fonction._meta.fields}
+    for row in GRADES:
+        Grade.objects.update_or_create(
+            code=row["code"],
+            defaults={key: value for key, value in row.items() if key != "code" and key in grade_fields},
+        )
+    for row in FONCTIONS:
+        Fonction.objects.update_or_create(
+            code=row["code"],
+            defaults={key: value for key, value in row.items() if key != "code" and key in fonction_fields},
+        )
     grades = dict(Grade.objects.values_list("code", "id"))
     fonctions = dict(Fonction.objects.values_list("code", "id"))
     for agent in Agent.objects.all():

@@ -6,9 +6,9 @@ from apps.audit.admin_mixins import AuditAdminMixin
 
 @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
-    list_display = ("ordre", "code", "libelle", "categorie", "echelon", "actif")
+    list_display = ("ordre", "abreviation", "code", "libelle", "categorie", "echelon", "actif")
     list_filter = ("categorie", "actif")
-    search_fields = ("code", "libelle")
+    search_fields = ("code", "abreviation", "libelle")
     ordering = ("ordre",)
 
 

@@ -33,3 +33,6 @@ class ReferentielTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Loi n° 16/013")
         self.assertContains(response, "décret n° 15/043")
+        self.assertContains(response, "ATA1")
+        self.assertContains(response, "AGA2")
+        self.assertContains(response, ">DIR<")

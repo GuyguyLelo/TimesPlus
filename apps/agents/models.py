@@ -21,6 +21,12 @@ class Grade(models.Model):
         D = "D", "Catégorie D — agents d'exécution"
 
     code = models.CharField("code", max_length=16, unique=True)
+    abreviation = models.CharField(
+        "abréviation",
+        max_length=16,
+        blank=True,
+        help_text="Code court utilisé dans les listes du personnel, par exemple DIR, CD ou ATA1.",
+    )
     libelle = models.CharField("libellé", max_length=120)
     categorie = models.CharField("catégorie", max_length=1, choices=Categorie.choices)
     echelon = models.PositiveSmallIntegerField("échelon", null=True, blank=True)
@@ -167,6 +173,12 @@ class Agent(models.Model):
         max_length=20,
         choices=Statut.choices,
         default=Statut.ACTIF,
+    )
+    ordre = models.PositiveIntegerField(
+        "ordre dans la liste",
+        null=True,
+        blank=True,
+        help_text="Place dans la liste déclarative. Vide : le nom sert de tri.",
     )
     actif = models.BooleanField("actif", default=True)
     created_at = models.DateTimeField("créé le", auto_now_add=True)
