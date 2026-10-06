@@ -36,13 +36,30 @@
       </div>
     </div>
     <script>
-      document.querySelectorAll(".demo-account").forEach(function (button) {
-        button.addEventListener("click", function () {
-          document.getElementById("id_username").value = button.getAttribute("data-username");
-          document.getElementById("id_password").value = button.getAttribute("data-password");
-          document.querySelector(".auth-card form").requestSubmit();
+      (function () {
+        var form = document.querySelector(".auth-card form");
+        var submitted = false;
+        form.addEventListener("submit", function (event) {
+          if (submitted) {
+            event.preventDefault();
+            return;
+          }
+          submitted = true;
+          var submit = form.querySelector("button[type=submit]");
+          if (submit) submit.disabled = true;
+          document.querySelectorAll(".demo-account").forEach(function (item) {
+            item.disabled = true;
+          });
         });
-      });
+        document.querySelectorAll(".demo-account").forEach(function (button) {
+          button.addEventListener("click", function () {
+            if (submitted) return;
+            document.getElementById("id_username").value = button.getAttribute("data-username");
+            document.getElementById("id_password").value = button.getAttribute("data-password");
+            form.requestSubmit();
+          });
+        });
+      })();
     </script>
   {% endif %}
 </section>

@@ -1,9 +1,10 @@
 import mimetypes
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import OuterRef, ProtectedError, Q, Subquery
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -15,6 +16,7 @@ from apps.agents.forms import AgentForm, AgentPhotoForm
 from apps.agents.models import Agent, Bareme, Fonction, Grade
 from apps.audit.utils import journaliser, model_snapshot
 from apps.overtime.selectors import agents_visible
+from apps.reports.services.apercu import rendre_apercu
 from apps.services.selectors import services_for_user
 
 
@@ -27,29 +29,7 @@ class AgentListView(AppPermissionMixin, ListView):
         return page_size()
 
     def get_queryset(self):
-        queryset = agents_visible(self.request.user).select_related(
-            "grade",
-            "fonction",
-            "service",
-            "service__service_parent",
-            "service__service_parent__service_parent",
-            "service__service_parent__service_parent__service_parent",
-        )
-        q = self.request.GET.get("q", "").strip()
-        if q:
-            queryset = queryset.filter(
-                Q(matricule__icontains=q)
-                | Q(nom__icontains=q)
-                | Q(postnom__icontains=q)
-                | Q(prenom__icontains=q)
-            )
-        service = self.request.GET.get("service")
-        if str(service).isdigit():
-            queryset = queryset.filter(service_id=int(service))
-        actif = self.request.GET.get("actif")
-        if actif in {"0", "1"}:
-            queryset = queryset.filter(actif=(actif == "1"))
-        return queryset.annotate(
+        return _agents_liste(self.request).annotate(
             taux_bareme=Subquery(
                 Bareme.objects.filter(
                     grade_id=OuterRef("grade_id"),
@@ -64,6 +44,57 @@ class AgentListView(AppPermissionMixin, ListView):
         context["services"] = services_for_user(self.request.user)
         context["query"] = self.request.GET.get("q", "")
         return context
+
+
+def _agents_liste(request):
+    queryset = agents_visible(request.user).select_related(
+        "grade",
+        "fonction",
+        "service",
+        "service__service_parent",
+        "service__service_parent__service_parent",
+        "service__service_parent__service_parent__service_parent",
+        "service__service_parent__service_parent__service_parent__service_parent",
+    )
+    q = request.GET.get("q", "").strip()
+    if q:
+        queryset = queryset.filter(
+            Q(matricule__icontains=q)
+            | Q(nom__icontains=q)
+            | Q(postnom__icontains=q)
+            | Q(prenom__icontains=q)
+        )
+    service = request.GET.get("service")
+    if str(service).isdigit():
+        queryset = queryset.filter(service_id=int(service))
+    actif = request.GET.get("actif")
+    if actif in {"0", "1"}:
+        queryset = queryset.filter(actif=(actif == "1"))
+    return queryset
+
+
+@login_required
+def agent_list_pdf(request):
+    if not request.user.has_perm("agents.view_agent") and not request.user.is_superuser:
+        messages.warning(request, DENIED)
+        return redirect("dashboard:home")
+    from apps.agents.annuaire import build_annuaire_pdf
+    from apps.settings_app.models import SiteSettings
+
+    agents = list(_agents_liste(request))
+    genere_le = timezone.localtime().strftime("%d/%m/%Y %H:%M")
+    payload = build_annuaire_pdf(agents, site=SiteSettings.load(), genere_le=genere_le)
+    params = {key: value for key, value in request.GET.items() if key != "page" and value}
+    retour = reverse("agents:list")
+    if params:
+        retour = f"{retour}?{urlencode(params)}"
+    return rendre_apercu(
+        request,
+        payload.getvalue(),
+        "liste-du-personnel.pdf",
+        "Liste déclarative par emboîtement",
+        retour,
+    )
 
 
 class ReferentielView(AppPermissionMixin, TemplateView):

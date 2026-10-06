@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.accounts.roles import ensure_groups
@@ -17,6 +17,21 @@ class AuthTests(TestCase):
         self.assertRedirects(response, reverse("dashboard:home"))
         self.assertIn("_auth_user_id", self.client.session)
         self.assertTrue(AuditLog.objects.filter(action="CONNEXION", user__username="agent").exists())
+
+    def test_second_login_post_returns_to_the_dashboard(self):
+        client = Client(enforce_csrf_checks=True)
+        page = client.get(reverse("login"))
+        token = page.context["csrf_token"]
+        first = client.post(
+            reverse("login"),
+            {"username": "agent", "password": PASSWORD, "csrfmiddlewaretoken": token},
+        )
+        self.assertRedirects(first, reverse("dashboard:home"))
+        again = client.post(
+            reverse("login"),
+            {"username": "agent", "password": PASSWORD, "csrfmiddlewaretoken": token},
+        )
+        self.assertRedirects(again, reverse("dashboard:home"))
 
     def test_invalid_login(self):
         response = self.client.post(reverse("login"), {"username": "agent", "password": "mauvais-mot"})

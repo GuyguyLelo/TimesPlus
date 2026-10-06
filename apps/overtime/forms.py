@@ -2,6 +2,7 @@ from calendar import monthrange
 from datetime import datetime, time
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.accounts.access import get_profile
@@ -18,6 +19,7 @@ from apps.overtime.models import (
 from apps.overtime.motifs import MOTIFS
 from apps.overtime.selectors import can_view_all, fiche_agent
 from apps.overtime.services.calculation import CalculationError, calculer_declaration
+from apps.overtime.validators import validate_uploaded_file
 
 
 class _DateTimeMixin:
@@ -31,6 +33,13 @@ class _DateTimeMixin:
 
 
 class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
+    effectifs = forms.IntegerField(
+        label="Effectifs",
+        required=False,
+        min_value=1,
+        help_text="Affiché automatiquement depuis la liste de présence de cette date.",
+    )
+
     class Meta:
         model = OvertimeRequest
         fields = ["agent", "date_travail", "heure_debut", "heure_fin", "motif", "observation"]
@@ -117,10 +126,37 @@ class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
         self.fields["heure_fin"].widget.attrs["min"] = "16:00"
         self.fields["heure_fin"].help_text = "L'heure de fin ne peut pas être inférieure à 16:00."
         self.fields["observation"].required = False
-        self.order_fields(["agent", "mois", "date_travail", "heure_debut", "heure_fin", "motif", "observation"])
+        self.fields["effectifs"].widget.attrs["readonly"] = True
+        self.fields["effectifs"].widget.attrs["aria-readonly"] = "true"
+        self.fields["effectifs"].widget.attrs["tabindex"] = "-1"
+        jour_effectifs = self.initial.get("date_travail") or reference
+        if self.is_bound:
+            try:
+                jour_effectifs = datetime.strptime(self.data.get("date_travail") or "", "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        self.appliquer_effectifs(jour_effectifs)
+        self.order_fields(
+            ["agent", "mois", "date_travail", "effectifs", "heure_debut", "heure_fin", "motif", "observation"]
+        )
         apply_bootstrap(self)
         locked = self.fields["heure_debut"].widget.attrs.get("class", "")
         self.fields["heure_debut"].widget.attrs["class"] = f"{locked} is-locked".strip()
+        locked_effectifs = self.fields["effectifs"].widget.attrs.get("class", "")
+        self.fields["effectifs"].widget.attrs["class"] = f"{locked_effectifs} is-locked".strip()
+
+    def appliquer_effectifs(self, jour):
+        """Reprend l'effectif de la liste de présence, sans saisie manuelle."""
+        from apps.overtime.models import ListePresence
+
+        liste = ListePresence.objects.filter(date=jour).first() if jour else None
+        valeur = liste.effectifs if liste is not None and liste.effectifs else None
+        self.initial["effectifs"] = valeur
+        self.fields["effectifs"].initial = valeur
+        if self.is_bound:
+            data = self.data.copy()
+            data["effectifs"] = "" if valeur is None else str(valeur)
+            self.data = data
 
     def clean_heure_debut(self):
         return time(16, 0)
@@ -217,6 +253,58 @@ def _bornes_mois(value):
     parsed = datetime.strptime(value, "%Y-%m")
     last = monthrange(parsed.year, parsed.month)[1]
     return parsed.date().replace(day=1), parsed.date().replace(day=last)
+
+
+class ListePresenceForm(BootstrapFormMixin, forms.Form):
+    date = forms.DateField(
+        label="Date",
+        widget=forms.DateInput(attrs={"type": "date"}),
+        help_text="Une seule liste pour cette date.",
+    )
+    effectifs = forms.IntegerField(
+        label="Effectifs",
+        min_value=1,
+        help_text="Nombre d'agents sur la liste signée.",
+    )
+    fichier = forms.FileField(
+        label="Liste signée",
+        help_text="Document signé par les agents : PDF ou image.",
+    )
+
+    def __init__(self, *args, liste=None, **kwargs):
+        self.liste = liste
+        super().__init__(*args, **kwargs)
+        if liste is None:
+            return
+        self.fields["fichier"].required = False
+        self.fields["fichier"].help_text = (
+            f"Document actuel : {liste.nom_original}. Laisser vide pour le conserver."
+        )
+        if not self.is_bound:
+            self.initial["date"] = liste.date
+            self.initial["effectifs"] = liste.effectifs
+
+    def clean_date(self):
+        jour = self.cleaned_data["date"]
+        from apps.overtime.models import ListePresence
+
+        deja = ListePresence.objects.filter(date=jour)
+        if self.liste is not None:
+            deja = deja.exclude(pk=self.liste.pk)
+        if deja.exists():
+            raise forms.ValidationError("Cette date a déjà une liste de présence. Une date n'en reçoit qu'une.")
+        return jour
+
+    def clean_fichier(self):
+        uploaded = self.cleaned_data.get("fichier")
+        self.nom_sur = ""
+        if not uploaded:
+            return uploaded
+        try:
+            self.nom_sur = validate_uploaded_file(uploaded)
+        except ValidationError as exc:
+            raise forms.ValidationError(exc.messages) from exc
+        return uploaded
 
 
 class AttachmentForm(BootstrapFormMixin, forms.Form):

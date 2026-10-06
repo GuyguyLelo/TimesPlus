@@ -57,9 +57,9 @@ FONT, FONT_BOLD = _register_fonts()
 
 def _styles():
     base = getSampleStyleSheet()
-    base.add(ParagraphStyle(name="CoverTitle", fontName=FONT_BOLD, fontSize=16, textColor=NAVY, alignment=TA_LEFT, spaceAfter=4))
+    base.add(ParagraphStyle(name="CoverTitle", fontName=FONT_BOLD, fontSize=11, leading=13, textColor=NAVY, alignment=TA_LEFT, spaceAfter=4))
     base.add(ParagraphStyle(name="Meta", fontName=FONT, fontSize=9, leading=12, textColor=colors.HexColor("#334155")))
-    base.add(ParagraphStyle(name="Section", fontName=FONT_BOLD, fontSize=12, textColor=NAVY, spaceBefore=8, spaceAfter=4))
+    base.add(ParagraphStyle(name="Section", fontName=FONT_BOLD, fontSize=11, leading=13, textColor=NAVY, spaceBefore=8, spaceAfter=4))
     base.add(ParagraphStyle(name="Cell", fontName=FONT, fontSize=8, leading=10))
     base.add(ParagraphStyle(name="CellBold", fontName=FONT_BOLD, fontSize=8, leading=10))
     return base
@@ -146,7 +146,7 @@ def _styled():
     if cached is not None:
         return cached
     cached = {
-        "title": ParagraphStyle("RecuTitle", fontName=FONT_BOLD, fontSize=16, leading=19, alignment=TA_RIGHT, textColor=INK),
+        "title": ParagraphStyle("RecuTitle", fontName=FONT_BOLD, fontSize=11, leading=13, alignment=TA_RIGHT, textColor=INK),
         "subtitle": ParagraphStyle("RecuSub", fontName=FONT, fontSize=8, leading=11, alignment=TA_RIGHT, textColor=MUTED),
         "ref": ParagraphStyle("RecuRef", fontName=FONT_BOLD, fontSize=13, leading=16, alignment=TA_CENTER, textColor=BLUE),
         "caption": ParagraphStyle("RecuCap", fontName=FONT, fontSize=7, leading=9, alignment=TA_CENTER, textColor=MUTED),

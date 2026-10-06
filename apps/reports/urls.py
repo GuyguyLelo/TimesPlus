@@ -12,4 +12,5 @@ urlpatterns = [
     path("rapports/agent/", views.AgentReportView.as_view(), name="agent"),
     path("rapports/export/excel/", views.ExportExcelView.as_view(), name="excel"),
     path("rapports/export/pdf/", views.ExportPdfView.as_view(), name="pdf"),
+    path("rapports/fichier/<str:jeton>/", views.servir_pdf, name="pdf_file"),
 ]

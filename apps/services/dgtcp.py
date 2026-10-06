@@ -247,6 +247,20 @@ _AFFECTATIONS = (
     ("DSI-014", "DINFO-ED-DEV", "AA2-1", "AA2"),
     ("DAF-008", "DMGP-FL-BUD", "CB-1", "CB"),
 )
+# matricule, nom, postnom, prénom, sexe, service, grade, fonction.
+# Un directeur, deux chefs de division, quatre chefs de bureau et trois attachés.
+_AGENTS_DTMF = (
+    ("DTMF-001", "KABANGE", "TSHIMANGA", "André", "M", "DTMF", "DIR", "DIR"),
+    ("DTMF-002", "NGOY", "KABONGO", "Marie", "F", "DTMF-TRES", "CD-1", "CD"),
+    ("DTMF-003", "ILUNGA", "MWAMBA", "Patrick", "M", "DTMF-FIN", "CD-1", "CD"),
+    ("DTMF-004", "MUTOMBO", "KALALA", "Grâce", "F", "DTMF-TRES-EST", "CB-1", "CB"),
+    ("DTMF-005", "KASONGO", "MUKENGE", "Eric", "M", "DTMF-TRES-EST", "AA2-1", "AA2"),
+    ("DTMF-006", "LUKUSA", "NGOY", "Joseph", "M", "DTMF-TRES-OPE", "CB-1", "CB"),
+    ("DTMF-007", "MBALA", "TSHIMANGA", "Clarisse", "F", "DTMF-TRES-OPE", "AA2-1", "AA2"),
+    ("DTMF-008", "KALALA", "ILUNGA", "Nadine", "F", "DTMF-FIN-TIT", "CB-1", "CB"),
+    ("DTMF-009", "MWAMBA", "KABANGE", "Serge", "M", "DTMF-FIN-TIT", "AA2-1", "AA2"),
+    ("DTMF-010", "TSHIMANGA", "LUKUSA", "Didier", "M", "DTMF-FIN-HOR", "CB-1", "CB"),
+)
 _PROFILS = {
     "rh": "DMGP",
     "chef": "DINFO-ED",
@@ -287,6 +301,54 @@ def ensure_dgtcp(sender=None, **kwargs):
         site.save()
 
 
+def assurer_agents_dtmf():
+    """Crée les dix agents de la Direction du trésor et des moyens de financement."""
+    from datetime import date
+    from decimal import Decimal
+    import unicodedata
+
+    from apps.agents.models import Agent, Bareme, Fonction, Grade
+    from apps.agents.referentiel import ensure_referentiel
+
+    ensure_dgtcp()
+    ensure_referentiel()
+    for matricule, nom, postnom, prenom, sexe, code, grade_code, fonction_code in _AGENTS_DTMF:
+        service = Service.objects.filter(code=code).first()
+        grade = Grade.objects.filter(code=grade_code).first()
+        fonction = Fonction.objects.filter(code=fonction_code).first()
+        if service is None or grade is None or fonction is None:
+            continue
+        courriel = unicodedata.normalize("NFD", f"{prenom}.{nom}@heures.local".lower())
+        courriel = "".join(car for car in courriel if unicodedata.category(car) != "Mn")
+        agent, created = Agent.objects.get_or_create(
+            matricule=matricule,
+            defaults={
+                "nom": nom,
+                "postnom": postnom,
+                "prenom": prenom,
+                "sexe": sexe,
+                "service": service,
+                "grade": grade,
+                "fonction": fonction,
+                "email": courriel,
+                "statut": Agent.Statut.ACTIF,
+                "actif": True,
+                "date_engagement": date(2021, 3, 1),
+            },
+        )
+        if not created:
+            agent.service = service
+            agent.grade = grade
+            agent.fonction = fonction
+            agent.actif = True
+            agent.save(update_fields=["service", "grade", "fonction", "actif", "updated_at"])
+        Bareme.objects.get_or_create(
+            grade=grade,
+            fonction=fonction,
+            defaults={"taux_horaire": Decimal("5000.00"), "actif": True},
+        )
+
+
 def reaffecter_agents():
     """Place chaque agent de démonstration sur l'unité DGTCP de son grade."""
     from django.contrib.auth.models import User
@@ -313,6 +375,7 @@ def reaffecter_agents():
             agent.fonction = fonction
             fields.append("fonction")
         agent.save(update_fields=fields)
+    assurer_agents_dtmf()
     for username, code in _PROFILS.items():
         cible = Service.objects.filter(code=code).first()
         user = User.objects.filter(username=username).first()

@@ -7,7 +7,7 @@
   <title>{% block title %}Tableau de bord{% endblock %} — Heures supplémentaires</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/font/bootstrap-icons.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=50">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=56">
 </head>
 <body>
   <div class="flag-ribbon" aria-hidden="true"></div>
@@ -25,11 +25,12 @@
           <a class="{% nav_class '/dashboard/' %}" href="{% url 'dashboard:home' %}"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
           {% if perms.agents.view_agent %}
             <p class="nav-section">Gestion</p>
-            <a class="{% nav_class '/agents/' '/agents/referentiel/' %}" href="{% url 'agents:list' %}"><i class="bi bi-people"></i> Agents</a>
+            <a class="{% nav_class '/agents/' '/agents/referentiel/' %}" href="{% url 'agents:list' %}"><i class="bi bi-people"></i> Gestion du personnel</a>
           {% endif %}
           {% if perms.overtime.view_overtime %}
             <p class="nav-section">Heures supplémentaires</p>
-            <a class="{% nav_class '/heures/' '/heures/nouvelle/' '/heures/paiement/' %}" href="{% url 'overtime:mine' %}"><i class="bi bi-clock-history"></i><span>Liste des Heures supplémentaires</span></a>
+            <a class="{% nav_class '/heures/' '/heures/nouvelle/' '/heures/paiement/' '/heures/presences/' %}" href="{% url 'overtime:mine' %}"><i class="bi bi-clock-history"></i><span>Liste des Heures supplémentaires</span></a>
+            <a class="{% nav_class '/heures/presences/' %}" href="{% url 'overtime:presences' %}"><i class="bi bi-clipboard-check"></i><span>Liste des présences</span></a>
             {% if perms.overtime.add_overtime %}<a class="{% nav_class '/heures/nouvelle/' %}" href="{% url 'overtime:create' %}"><i class="bi bi-plus-circle"></i> Saisie Heure Sup</a>{% endif %}
             <a class="{% nav_class '/heures/paiement/' %}" href="{% url 'overtime:payroll' %}"><i class="bi bi-cash-coin"></i> Paiement Heure Sup</a>
           {% endif %}
@@ -112,7 +113,7 @@
     </div>
   </div>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/app.js' %}?v=35"></script>
+  <script src="{% static 'js/app.js' %}?v=36"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

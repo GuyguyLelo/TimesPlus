@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% load ui %}
-{% block title %}Agents{% endblock %}
+{% block title %}Gestion du personnel{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between mb-3">
-  <h1 class="h3">Agents</h1>
-  {% if perms.agents.add_agent %}<a class="btn btn-primary" href="{% url 'agents:create' %}">Nouvel agent</a>{% endif %}
+  <h1 class="h3">Gestion du personnel</h1>
+  <div class="filter-actions">
+    <a class="btn btn-outline-primary" href="{% url 'agents:print' %}?{% querystring page='' %}"><i class="bi bi-printer"></i> Imprimer</a>
+    {% if perms.agents.add_agent %}<a class="btn btn-primary" href="{% url 'agents:create' %}">Nouvel agent</a>{% endif %}
+  </div>
 </div>
 <form class="card filter-bar mb-3" method="get">
   <div class="card-body row g-2 align-items-end">
@@ -27,7 +30,10 @@
         <option value="0" {% if request.GET.actif == "0" %}selected{% endif %}>Inactifs</option>
       </select>
     </div>
-    <div class="col-md-2"><button class="btn btn-primary" type="submit">Filtrer</button></div>
+    <div class="col-md-auto"><div class="filter-actions">
+      <button class="btn btn-primary" type="submit">Filtrer</button>
+      {% include "partials/reset_filters.html" %}
+    </div></div>
   </div>
 </form>
 <div class="card"><div class="table-responsive"><table class="table mb-0">

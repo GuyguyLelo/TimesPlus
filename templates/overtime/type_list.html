@@ -1,20 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Types d'heures{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between mb-3">
-  <h1 class="h3">Types d'heures</h1>
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker">Administration</p>
+    <h1>Types d'heures</h1>
+    <p>Catégories utilisées par les règles de calcul. Le coefficient affiché est la valeur de référence.</p>
+  </div>
   <a class="btn btn-primary" href="{% url 'overtime:type_create' %}">Nouveau type</a>
 </div>
-<div class="card"><table class="table mb-0">
-  <thead><tr><th>Code</th><th>Libellé</th><th>Coefficient</th><th>Actif</th></tr></thead>
-  <tbody>
+
+<section class="card ref-panel">
+  <ul class="ref-list">
     {% for item in types %}
-      <tr>
-        <td><span class="code-chip">{{ item.code }}</span></td><td>{{ item.libelle }}</td><td><span class="coef">{{ item.coefficient }}</span></td>
-        <td>{% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}</td>
-      </tr>
-    {% empty %}<tr><td colspan="4"><i class="bi bi-inbox"></i>Aucun type.</td></tr>{% endfor %}
-  </tbody>
-</table></div>
+      <li class="{% if not item.actif %}is-off{% endif %}">
+        <div class="admin-main">
+          <span class="cat-mark" aria-hidden="true"><i class="bi bi-tag"></i></span>
+          <div class="admin-copy">
+            <strong>{{ item.libelle }}</strong>
+            <span class="admin-meta"><span class="code-chip">{{ item.code }}</span></span>
+          </div>
+        </div>
+        <div class="ref-side">
+          <span class="coef">{{ item.coefficient }}</span>
+          {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+          <span class="row-actions"><a href="{% url 'overtime:type_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a></span>
+        </div>
+      </li>
+    {% empty %}
+      <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucun type.</span></li>
+    {% endfor %}
+  </ul>
+</section>
 {% include "partials/pagination.html" %}
 {% endblock %}

@@ -91,9 +91,15 @@ def build_referential():
         grade=Grade.objects.get(code="DIR"),
         fonction=Fonction.objects.get(code="DIR"),
     )
-    Bareme.objects.create(grade=agent.grade, fonction=agent.fonction, taux_horaire=Decimal("5000"))
-    Bareme.objects.create(grade=chef_agent.grade, fonction=chef_agent.fonction, taux_horaire=Decimal("6000"))
-    Bareme.objects.create(grade=other.grade, fonction=other.fonction, taux_horaire=Decimal("4000"))
+    Bareme.objects.get_or_create(
+        grade=agent.grade, fonction=agent.fonction, defaults={"taux_horaire": Decimal("5000")}
+    )
+    Bareme.objects.get_or_create(
+        grade=chef_agent.grade, fonction=chef_agent.fonction, defaults={"taux_horaire": Decimal("6000")}
+    )
+    Bareme.objects.get_or_create(
+        grade=other.grade, fonction=other.fonction, defaults={"taux_horaire": Decimal("4000")}
+    )
     agent_user = make_user("agent", "AGENT", agent=agent)
     chef_user = make_user("chef", "CHEF_SERVICE", agent=chef_agent, service=dsi)
     rh_user = make_user("rh", "ADMIN_RH", service=drh)

@@ -5,6 +5,7 @@ from apps.overtime.formatting import format_montant
 from apps.overtime.models import (
     Attachment,
     Holiday,
+    ListePresence,
     OvertimeRequest,
     OvertimeRule,
     OvertimeType,
@@ -91,6 +92,15 @@ class OvertimeRequestAdmin(AuditAdminMixin, admin.ModelAdmin):
         if obj and obj.statut == OvertimeRequest.Statut.APPROUVE:
             return [field.name for field in obj._meta.fields]
         return fields
+
+
+@admin.register(ListePresence)
+class ListePresenceAdmin(AuditAdminMixin, admin.ModelAdmin):
+    list_display = ("date", "effectifs", "nom_original", "taille", "depose_par", "depose_le")
+    search_fields = ("nom_original",)
+    date_hierarchy = "date"
+    readonly_fields = ("nom_original", "taille", "content_type", "depose_par", "depose_le")
+    list_per_page = 20
 
 
 @admin.register(PaiementMois)

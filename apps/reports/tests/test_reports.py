@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 from datetime import date, time
 
@@ -29,6 +30,14 @@ class ReportTests(TestCase):
         )
         return demande
 
+    def test_monthly_report_has_no_status_filter(self):
+        self.client.login(username="admin", password=PASSWORD)
+        page = self.client.get(reverse("reports:monthly"))
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, 'name="statut"')
+        service = self.client.get(reverse("reports:service"))
+        self.assertContains(service, 'name="statut"')
+
     def test_excel_pdf_and_totals(self):
         self._approve(date(2026, 10, 7), time(17, 0), time(20, 0))
         self._approve(date(2026, 10, 8), time(17, 0), time(20, 30))
@@ -44,10 +53,18 @@ class ReportTests(TestCase):
         self.assertEqual(labels["Total minutes"], 390)
         self.assertEqual(labels["Nombre de demandes"], 2)
 
-        pdf = self.client.get(reverse("reports:pdf") + query + "&kind=ADMINISTRATIF")
-        self.assertEqual(pdf.status_code, 200)
+        apercu = self.client.get(reverse("reports:pdf") + query + "&kind=ADMINISTRATIF")
+        self.assertEqual(apercu.status_code, 200)
+        self.assertContains(apercu, "Télécharger")
+        match = re.search(br'class="pdf-frame" src="([^"]+)"', apercu.content)
+        self.assertIsNotNone(match)
+        pdf = self.client.get(match.group(1).decode())
+        telechargement = self.client.get(match.group(1).decode() + "?telecharger=1")
         self.assertEqual(pdf["Content-Type"], "application/pdf")
+        self.assertIn("inline", pdf["Content-Disposition"])
         self.assertTrue(pdf.content.startswith(b"%PDF"))
+        self.assertEqual(telechargement.content, pdf.content)
+        self.assertIn("attachment", telechargement["Content-Disposition"])
         self.assertTrue(GeneratedReport.objects.filter(format=GeneratedReport.Format.PDF).exists())
 
     def test_service_filter_limits_the_total(self):

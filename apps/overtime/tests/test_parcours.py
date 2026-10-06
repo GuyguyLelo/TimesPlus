@@ -1,9 +1,11 @@
+import re
 from datetime import date, time
 
+from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.overtime.models import OvertimeRequest
+from apps.overtime.models import ListePresence, OvertimeRequest
 from apps.overtime.tests.helpers import PASSWORD, build_referential
 from apps.reports.models import GeneratedReport
 
@@ -15,11 +17,20 @@ class ParcoursTests(TestCase):
 
     def test_full_path_from_declaration_to_exports(self):
         self.client.login(username="agent", password=PASSWORD)
+        liste = ListePresence(
+            date=date(2026, 10, 7),
+            effectifs=5,
+            nom_original="liste.pdf",
+            taille=8,
+            content_type="application/pdf",
+        )
+        liste.fichier.save("liste.pdf", ContentFile(b"%PDF-1.4\n"), save=True)
         response = self.client.post(
             reverse("overtime:create"),
             {
                 "agent": self.world["agent"].pk,
                 "date_travail": "2026-10-07",
+                "effectifs": "5",
                 "heure_debut": "17:00",
                 "heure_fin": "20:30",
                 "motif": "PERMANENCE",
@@ -50,9 +61,12 @@ class ParcoursTests(TestCase):
         self.client.logout()
         self.client.login(username="rh", password=PASSWORD)
         query = "?debut=2026-10-01&fin=2026-10-31&kind=ADMINISTRATIF"
-        pdf = self.client.get(reverse("reports:pdf") + query)
+        apercu = self.client.get(reverse("reports:pdf") + query)
         excel = self.client.get(reverse("reports:excel") + "?debut=2026-10-01&fin=2026-10-31")
-        self.assertEqual(pdf.status_code, 200)
+        self.assertEqual(apercu.status_code, 200)
+        match = re.search(br'class="pdf-frame" src="([^"]+)"', apercu.content)
+        self.assertIsNotNone(match)
+        pdf = self.client.get(match.group(1).decode())
         self.assertTrue(pdf.content.startswith(b"%PDF"))
         self.assertEqual(excel.status_code, 200)
         self.assertGreater(GeneratedReport.objects.count(), 0)

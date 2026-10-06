@@ -215,6 +215,32 @@
     mois.addEventListener("change", applyMonth);
   }
 
+  function showEffectifs() {
+    var field = document.getElementById("id_effectifs");
+    var url = form.getAttribute("data-effectifs-url");
+    if (!field || !url || !dateField) {
+      return;
+    }
+    if (!dateField.value) {
+      field.value = "";
+      return;
+    }
+    fetch(url + "?date=" + encodeURIComponent(dateField.value), {
+      headers: { "X-Requested-With": "fetch" }
+    }).then(function (response) {
+      return response.json();
+    }).then(function (data) {
+      field.value = data.effectifs ? String(data.effectifs) : "";
+    }).catch(function () {
+      field.value = "";
+    });
+  }
+
+  if (dateField) {
+    dateField.addEventListener("change", showEffectifs);
+    showEffectifs();
+  }
+
   var query = document.getElementById("agent-query");
   var results = document.getElementById("agent-results");
   var agentField = document.getElementById("id_agent");

@@ -52,17 +52,20 @@
     <label class="form-label" for="fin">Au</label>
     <input class="form-control" id="fin" type="date" name="fin" value="{{ filtre_fin }}">
   </div>
-  <button class="btn btn-primary" type="submit">Filtrer</button>
+  <div class="filter-actions">
+    <button class="btn btn-primary" type="submit">Filtrer</button>
+    {% include "partials/reset_filters.html" %}
+  </div>
 </form>
 
 <section class="hs-panel">
-  <header class="hs-list-head">
-    <span>Créneau de 16:00 à minuit</span>
-    <div class="hs-sort">
-      <a href="?{% querystring tri='date' ordre='asc' %}">Date</a>
-      <a href="?{% querystring tri='duree' ordre='desc' %}">Durée</a>
-    </div>
-  </header>
+  <div class="hs-cols{% if show_agent %} has-agent{% endif %}">
+    <span><a href="?{% querystring tri='date' ordre='asc' %}">Date</a></span>
+    {% if show_agent %}<span>Agent</span>{% endif %}
+    <span><a href="?{% querystring tri='duree' ordre='desc' %}" title="Créneau de 16:00 à minuit">Créneau</a></span>
+    <span>Motif</span>
+    <span>Statut</span>
+  </div>
   <ul class="hs-list">
     {% for item in declarations %}
       {% with barre=item|creneau %}
@@ -109,5 +112,32 @@
     {% endfor %}
   </ul>
 </section>
-{% include "partials/pagination.html" %}
+{% if page_obj.paginator.count %}
+<nav class="hs-pager" aria-label="Pagination">
+  <p>{{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ page_obj.paginator.count }}</p>
+  <ul class="pagination">
+    <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+      {% if page_obj.has_previous %}
+        <a class="page-link" href="?{% querystring page=page_obj.previous_page_number %}">Précédent</a>
+      {% else %}
+        <span class="page-link">Précédent</span>
+      {% endif %}
+    </li>
+    {% for number in page_obj.paginator.page_range %}
+      {% if number == page_obj.number %}
+        <li class="page-item active"><span class="page-link" aria-current="page">{{ number }}</span></li>
+      {% elif number > page_obj.number|add:"-3" and number < page_obj.number|add:"3" %}
+        <li class="page-item"><a class="page-link" href="?{% querystring page=number %}">{{ number }}</a></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+      {% if page_obj.has_next %}
+        <a class="page-link" href="?{% querystring page=page_obj.next_page_number %}">Suivant</a>
+      {% else %}
+        <span class="page-link">Suivant</span>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

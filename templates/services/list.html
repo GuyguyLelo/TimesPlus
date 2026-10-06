@@ -14,7 +14,10 @@
       <label class="form-label" for="q">Recherche</label>
       <input class="form-control" id="q" type="search" name="q" value="{{ query }}" placeholder="Code ou nom">
     </div>
-    <div class="col-md-2"><button class="btn btn-primary" type="submit">Rechercher</button></div>
+    <div class="col-md-auto"><div class="filter-actions">
+      <button class="btn btn-primary" type="submit">Rechercher</button>
+      {% include "partials/reset_filters.html" %}
+    </div></div>
   </div>
 </form>
 

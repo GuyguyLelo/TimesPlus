@@ -141,6 +141,9 @@ class Command(BaseCommand):
                 defaults={"taux_horaire": Decimal("5000.00"), "actif": True},
             )
             created[matricule] = agent
+        from apps.services.dgtcp import assurer_agents_dtmf
+
+        assurer_agents_dtmf()
         return created
 
     def _users(self, agents, services):

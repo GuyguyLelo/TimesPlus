@@ -12,7 +12,10 @@
       {% for action in actions %}<option value="{{ action }}" {% if request.GET.action == action %}selected{% endif %}>{{ action }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-md-2"><button class="btn btn-primary" type="submit">Filtrer</button></div>
+  <div class="col-md-auto"><div class="filter-actions">
+    <button class="btn btn-primary" type="submit">Filtrer</button>
+    {% include "partials/reset_filters.html" %}
+  </div></div>
   </div>
 </form>
 <div class="card"><div class="table-responsive"><table class="table table-sm mb-0">

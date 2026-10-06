@@ -20,7 +20,10 @@
         {% for item in types %}<option value="{{ item.pk }}">{{ item.libelle }}</option>{% endfor %}
       </select>
     </div>
-    <div class="col-md-1"><button class="btn btn-outline-primary w-100" type="submit">OK</button></div>
+    <div class="col-md-auto"><div class="filter-actions">
+      <button class="btn btn-outline-primary" type="submit">OK</button>
+      {% include "partials/reset_filters.html" %}
+    </div></div>
   </div>
 </form>
 <div class="card"><div class="table-responsive"><table class="table mb-0">

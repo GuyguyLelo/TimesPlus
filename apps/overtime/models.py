@@ -11,6 +11,11 @@ def attachment_upload_to(instance, filename):
     return f"attachments/{instance.demande_id}/{uuid.uuid4().hex}{extension}"
 
 
+def presence_upload_to(instance, filename):
+    extension = Path(filename).suffix.lower()
+    return f"presences/{instance.date:%Y/%m}/{uuid.uuid4().hex}{extension}"
+
+
 class WorkSchedule(models.Model):
     """Horaire administratif de référence. Il ne fixe aucun taux de rémunération."""
 
@@ -384,6 +389,33 @@ class Attachment(models.Model):
 
     def __str__(self):
         return self.nom_original
+
+
+class ListePresence(models.Model):
+    """Liste de présence signée par les agents, jointe à une date."""
+
+    date = models.DateField("date", unique=True)
+    effectifs = models.PositiveIntegerField("effectifs", null=True, blank=True)
+    fichier = models.FileField("fichier", upload_to=presence_upload_to)
+    nom_original = models.CharField("nom du fichier", max_length=150)
+    taille = models.PositiveIntegerField("taille (octets)")
+    content_type = models.CharField("type MIME", max_length=120, blank=True)
+    depose_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="déposé par",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="listes_presence",
+    )
+    depose_le = models.DateTimeField("déposé le", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "liste de présence"
+        verbose_name_plural = "listes de présence"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"Présences du {self.date:%d/%m/%Y}"
 
 
 class ListeJournaliere(models.Model):

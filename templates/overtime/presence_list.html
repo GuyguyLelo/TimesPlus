@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Liste des présences{% endblock %}
+{% block content %}
+<div class="hs-head">
+  <div class="page-intro mb-0">
+    <p class="agent-kicker">Heures supplémentaires</p>
+    <h1>Liste des présences</h1>
+    <p>Une date reçoit une seule liste signée par les agents.</p>
+  </div>
+  {% if perms.overtime.add_overtime %}
+    <div class="hs-tools">
+      <a class="btn btn-primary" href="{% url 'overtime:presence_create' %}">Joindre une liste</a>
+    </div>
+  {% endif %}
+</div>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Effectifs</th>
+      <th>Fichier</th>
+      <th>Déposé le</th>
+      <th>Déposé par</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in listes %}
+      <tr>
+        <td>{{ item.date|date:"d/m/Y" }}</td>
+        <td>{{ item.effectifs|default:"—" }}</td>
+        <td>{{ item.nom_original }}</td>
+        <td>{{ item.depose_le|date:"d/m/Y H:i" }}</td>
+        <td>{{ item.depose_par|default:"—" }}</td>
+        <td class="row-actions">
+          <a href="{% url 'overtime:presence_download' item.pk %}"><i class="bi bi-download"></i> Télécharger</a>
+          {% if perms.overtime.add_overtime %}
+            <a href="{% url 'overtime:presence_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6"><i class="bi bi-inbox"></i>Aucune liste de présence jointe.</td></tr>
+    {% endfor %}
+  </tbody>
+</table></div></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

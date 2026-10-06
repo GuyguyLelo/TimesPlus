@@ -1,19 +1,22 @@
 from datetime import date, timedelta
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views import View
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import TemplateView
 
 from apps.accounts.mixins import AppPermissionMixin, page_size
 from apps.audit.utils import journaliser
 from apps.overtime.formatting import format_minutes
 from apps.overtime.forms import ANNEE_MOIS, _bornes_mois, _NOMS_MOIS
-from apps.reports.forms import MonthlyReportFilterForm, ReportFilterForm
+from apps.reports.forms import MonthlyReportFilterForm, RapportMensuelFilterForm, ReportFilterForm
 from apps.reports.models import GeneratedReport, ReportSequence
 from apps.agents.models import Agent
 from apps.reports.services import (
@@ -28,6 +31,7 @@ from apps.reports.services import (
     report_queryset,
     report_totals,
 )
+from apps.reports.services.apercu import rendre_apercu, reponse_pdf
 from apps.reports.services.excel import build_workbook
 from apps.reports.services.pdf import build_pdf
 from apps.settings_app.models import SiteSettings
@@ -92,6 +96,23 @@ def _periode_label(params):
     if fin:
         return f"Jusqu'au {fin:%d/%m/%Y}"
     return "Toutes périodes"
+
+
+_TITRE_RAPPORT = {
+    "INDIVIDUEL": "Fiche individuelle",
+    "SERVICE": "Rapport par service",
+    "MENSUEL": "Rapport mensuel",
+    "ADMINISTRATIF": "Rapport administratif",
+    "HISTORIQUE": "Rapport historique",
+}
+
+_RETOUR_RAPPORT = {
+    "INDIVIDUEL": "reports:agent",
+    "SERVICE": "reports:service",
+    "MENSUEL": "reports:monthly",
+    "ADMINISTRATIF": "reports:hub",
+    "HISTORIQUE": "reports:historical",
+}
 
 
 def allocate_numero():
@@ -195,7 +216,7 @@ class MonthlyReportView(ReportPage):
     title = "Rapport mensuel"
     kind = "MENSUEL"
     fallback_month = True
-    form_class = MonthlyReportFilterForm
+    form_class = RapportMensuelFilterForm
 
 
 class HistoricalReportView(AppPermissionMixin, TemplateView):
@@ -347,9 +368,33 @@ class ExportPdfView(AppPermissionMixin, View):
             agent=agent,
         )
         _record(request, numero, kind, GeneratedReport.Format.PDF, params)
-        response = HttpResponse(payload.getvalue(), content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{numero}.pdf"'
-        return response
+        origine = request.GET.get("kind") or "ADMINISTRATIF"
+        if origine not in _RETOUR_RAPPORT:
+            origine = "ADMINISTRATIF"
+        conserve = request.GET.copy()
+        conserve.pop("kind", None)
+        retour = reverse(_RETOUR_RAPPORT[origine])
+        if conserve:
+            retour = f"{retour}?{conserve.urlencode()}"
+        return rendre_apercu(
+            request,
+            payload.getvalue(),
+            f"{numero}.pdf",
+            _TITRE_RAPPORT.get(kind, "Rapport"),
+            retour,
+        )
+
+
+@login_required
+@xframe_options_sameorigin
+def servir_pdf(request, jeton):
+    if not (
+        request.user.has_perm("reports.export_reports")
+        or request.user.has_perm("agents.view_agent")
+        or request.user.is_superuser
+    ):
+        raise Http404
+    return reponse_pdf(request.user.pk, jeton, request.GET.get("telecharger") == "1")
 
 
 def paginate(request, queryset):

@@ -45,7 +45,10 @@
       </select>
     </div>
   </div>
-  <button class="btn btn-primary" type="submit">Filtrer</button>
+  <div class="filter-actions">
+    <button class="btn btn-primary" type="submit">Filtrer</button>
+    {% include "partials/reset_filters.html" %}
+  </div>
 </form>
 <div class="rapport-stats is-quad">
   <article class="card stat-card">
@@ -66,7 +69,7 @@
       <div><p>Durée</p><strong>{{ cards.duree }}</strong></div>
     </div>
   </article>
-  <article class="card stat-card">
+  <article class="card stat-card stat-montant">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
       <div><p>Montant</p><strong><span class="montant">{{ cards.montant }} {{ site_settings.devise }}</span></strong></div>

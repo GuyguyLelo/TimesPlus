@@ -23,7 +23,10 @@
 </div>
 <form class="rapport-filters" method="get">
   {% include "partials/form_fields.html" %}
-  <button class="btn btn-primary" type="submit">Filtrer</button>
+  <div class="filter-actions">
+    <button class="btn btn-primary" type="submit">Filtrer</button>
+    {% include "partials/reset_filters.html" %}
+  </div>
 </form>
 <div class="rapport-stats">
   <article class="card stat-card">
@@ -147,7 +150,10 @@
 <form class="card mb-3" method="get">
   <div class="card-body">
     {% include "partials/form_fields.html" %}
-    <button class="btn btn-outline-primary" type="submit">Appliquer les filtres</button>
+    <div class="filter-actions">
+      <button class="btn btn-outline-primary" type="submit">Appliquer les filtres</button>
+      {% include "partials/reset_filters.html" %}
+    </div>
   </div>
 </form>
 <div class="row g-3 mb-3">

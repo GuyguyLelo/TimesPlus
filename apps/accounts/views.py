@@ -5,12 +5,27 @@ from django.contrib.auth.views import LoginView
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.generic import DetailView, FormView, ListView
 
 from apps.accounts.access import get_profile
 from apps.accounts.forms import UserCreateForm, UserUpdateForm
 from apps.accounts.mixins import AppPermissionMixin, PageSizeMixin, page_size
 from apps.audit.utils import journaliser
+
+
+def csrf_failure(request, reason=""):
+    """Renvoie au tableau de bord si la session est déjà ouverte.
+
+    Un second envoi du formulaire de connexion arrive après la rotation du
+    jeton : la session est valide, seul le jeton du premier envoi est périmé.
+    """
+    user = getattr(request, "user", None)
+    if user is not None and user.is_authenticated:
+        return redirect(settings.LOGIN_REDIRECT_URL)
+    if request.path == reverse("login"):
+        return redirect("login")
+    return django_csrf_failure(request, reason=reason)
 
 
 class AppLoginView(LoginView):

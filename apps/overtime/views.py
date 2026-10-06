@@ -227,6 +227,7 @@ class OvertimeFormView(AppPermissionMixin, FormView):
                     end = jour.replace(day=monthrange(jour.year, jour.month)[1])
                     form.fields["date_travail"].widget.attrs["min"] = start.isoformat()
                     form.fields["date_travail"].widget.attrs["max"] = end.isoformat()
+                    form.appliquer_effectifs(jour)
         return form
 
     def get_form_kwargs(self):

@@ -1,19 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Groupes{% endblock %}
 {% block content %}
-<h1 class="h3">Groupes</h1>
-<p class="text-secondary">La matrice des rôles est réappliquée lors des migrations depuis le module des permissions.</p>
-<div class="card"><table class="table mb-0">
-  <thead><tr><th>Groupe</th><th>Permissions</th><th></th></tr></thead>
-  <tbody>
+<div class="page-intro">
+  <p class="agent-kicker">Administration</p>
+  <h1>Groupes</h1>
+  <p>La matrice des rôles est réappliquée lors des migrations depuis le module des permissions.</p>
+</div>
+
+<section class="card ref-panel">
+  <ul class="ref-list">
     {% for groupe in groupes %}
-      <tr>
-        <td><span class="code-chip">{{ groupe.name }}</span></td>
-        <td>{{ groupe.permissions.count }}</td>
-        <td class="row-actions"><a href="{% url 'accounts:group_detail' groupe.pk %}"><i class="bi bi-eye"></i> Consulter</a></td>
-      </tr>
+      <li>
+        <div class="admin-main">
+          <span class="cat-mark" aria-hidden="true"><i class="bi bi-diagram-3"></i></span>
+          <div class="admin-copy">
+            <strong>{{ groupe.name }}</strong>
+            <span class="admin-meta">{{ groupe.permissions.count }} permission{{ groupe.permissions.count|pluralize }}</span>
+          </div>
+        </div>
+        <div class="ref-side">
+          <span class="row-actions"><a href="{% url 'accounts:group_detail' groupe.pk %}"><i class="bi bi-eye"></i> Consulter</a></span>
+        </div>
+      </li>
+    {% empty %}
+      <li class="ref-empty"><span><i class="bi bi-inbox"></i>Aucun groupe.</span></li>
     {% endfor %}
-  </tbody>
-</table></div>
+  </ul>
+</section>
 {% include "partials/pagination.html" %}
 {% endblock %}

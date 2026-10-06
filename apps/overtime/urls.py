@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.overtime import views, views_referentiel
+from apps.overtime import views, views_presence, views_referentiel
 
 app_name = "overtime"
 
@@ -9,6 +9,11 @@ urlpatterns = [
     path("heures/nouvelle/", views.OvertimeFormView.as_view(), name="create"),
     path("heures/paiement/", views.PayrollView.as_view(), name="payroll"),
     path("heures/paiement/cloturer/", views.PayrollCloseView.as_view(), name="payroll_close"),
+    path("heures/presences/", views_presence.PresenceListView.as_view(), name="presences"),
+    path("heures/presences/joindre/", views_presence.PresenceCreateView.as_view(), name="presence_create"),
+    path("heures/presences/effectif/", views_presence.presence_effectifs, name="presence_headcount"),
+    path("heures/presences/<int:pk>/telecharger/", views_presence.download_presence, name="presence_download"),
+    path("heures/presences/<int:pk>/modifier/", views_presence.PresenceUpdateView.as_view(), name="presence_update"),
     path("heures/agents/", views.search_agents, name="agent_search"),
     path("heures/listes/<int:pk>/signer/", views.signer_liste, name="sign_list"),
     path("heures/toutes/", views.AllOvertimeRedirectView.as_view(), name="all"),

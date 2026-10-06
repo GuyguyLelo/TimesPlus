@@ -9,6 +9,7 @@
   <form class="holiday-tools" method="get">
     <input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Libellé" aria-label="Recherche">
     <button class="btn btn-primary" type="submit">Rechercher</button>
+    {% include "partials/reset_filters.html" %}
     {% if perms.overtime.manage_rules %}<a class="btn btn-outline-primary" href="{% url 'overtime:holiday_create' %}">Ajouter</a>{% endif %}
   </form>
 </div>

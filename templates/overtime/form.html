@@ -11,7 +11,7 @@
         <p class="saisie-note">Horaire administratif : {{ horaire.heure_debut|time:"H:i" }} – {{ horaire.heure_fin|time:"H:i" }} ({{ horaire.nom }}).</p>
       {% endif %}
     </header>
-    <form method="post" id="declaration-form" data-preview-url="{% url 'overtime:preview' %}" data-agent-url="{% url 'overtime:agent_search' %}" data-exclude="{{ declaration.pk|default:'' }}">
+    <form method="post" id="declaration-form" data-preview-url="{% url 'overtime:preview' %}" data-agent-url="{% url 'overtime:agent_search' %}" data-effectifs-url="{% url 'overtime:presence_headcount' %}" data-exclude="{{ declaration.pk|default:'' }}">
       {% csrf_token %}
       {% if form.saisie_fermee %}
         <div class="alert alert-warning" role="alert">Les mois clôturés n'acceptent plus de saisie.</div>
@@ -54,6 +54,7 @@
         <div class="field-grid">
           {% include "partials/one_field.html" with field=form.mois %}
           {% include "partials/one_field.html" with field=form.date_travail %}
+          {% include "partials/one_field.html" with field=form.effectifs %}
           {% include "partials/one_field.html" with field=form.heure_debut %}
           {% include "partials/one_field.html" with field=form.heure_fin %}
         </div>

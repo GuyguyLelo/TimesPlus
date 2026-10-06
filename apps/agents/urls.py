@@ -6,6 +6,7 @@ app_name = "agents"
 
 urlpatterns = [
     path("agents/", views.AgentListView.as_view(), name="list"),
+    path("agents/imprimer/", views.agent_list_pdf, name="print"),
     path("agents/referentiel/", views.ReferentielView.as_view(), name="referentiel"),
     path("administration/bareme/", views_bareme.BaremeListView.as_view(), name="bareme"),
     path("administration/bareme/nouveau/", views_bareme.BaremeCreateView.as_view(), name="bareme_create"),

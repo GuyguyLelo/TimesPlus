@@ -62,3 +62,9 @@ class MonthlyReportFilterForm(ReportFilterForm):
             self.initial["mois"] = today.strftime("%Y-%m")
         self.order_fields(["mois", "service", "agent", "statut", "type_heure"])
         apply_bootstrap(self)
+
+
+class RapportMensuelFilterForm(MonthlyReportFilterForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("statut", None)

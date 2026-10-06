@@ -175,6 +175,8 @@ else:
     CSRF_COOKIE_SECURE = False
     SECURE_SSL_REDIRECT = False
 
+CSRF_FAILURE_VIEW = "apps.accounts.views.csrf_failure"
+
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
     "http://localhost,http://127.0.0.1",
