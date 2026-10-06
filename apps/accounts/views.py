@@ -32,15 +32,6 @@ class AppLoginView(LoginView):
     template_name = "registration/login.html"
     redirect_authenticated_user = True
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if settings.DEBUG:
-            context["demo_accounts"] = [
-                {"username": "admin", "password": "admin123", "role": "Super administrateur"},
-                {"username": "rh", "password": "Gestion-Heures-Rh-2026!", "role": "Administration RH"},
-            ]
-        return context
-
 
 class UserListView(AppPermissionMixin, ListView):
     permission_required = "accounts.manage_users"

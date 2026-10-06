@@ -36,6 +36,7 @@ class AuthTests(TestCase):
     def test_invalid_login(self):
         response = self.client.post(reverse("login"), {"username": "agent", "password": "mauvais-mot"})
         self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Comptes de démonstration")
         self.assertNotIn("_auth_user_id", self.client.session)
         self.assertTrue(AuditLog.objects.filter(action="CONNEXION_ECHOUEE").exists())
 
@@ -50,6 +51,20 @@ class AuthTests(TestCase):
         response = self.client.get(reverse("dashboard:home"))
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('dashboard:home')}")
         self.assertTrue(AuditLog.objects.filter(action="DECONNEXION").exists())
+
+    def test_rh_does_not_see_the_administration_menu(self):
+        ensure_groups(force=True)
+        self.client.login(username="rh", password=PASSWORD)
+        page = self.client.get(reverse("dashboard:home"))
+        self.assertNotContains(page, ">Administration</p>")
+        self.assertNotContains(page, ">Audit</p>")
+        self.assertContains(page, "Gestion du personnel")
+        users = self.client.get(reverse("accounts:users"))
+        self.assertRedirects(users, reverse("dashboard:home"))
+        rules = self.client.get(reverse("overtime:rules"))
+        self.assertRedirects(rules, reverse("dashboard:home"))
+        journal = self.client.get(reverse("audit:list"))
+        self.assertRedirects(journal, reverse("dashboard:home"))
 
     def test_roles_exist(self):
         ensure_groups(force=True)

@@ -105,7 +105,7 @@ Comptes créés la première fois (à changer avant toute mise en production) :
 
 | Identifiant | Mot de passe | Rôle |
 | --- | --- | --- |
-| `admin` | `Gestion-Heures-Admin-2026!` | Super administrateur |
+| `admin` | `Admin@123` | Super administrateur |
 | `rh` | `Gestion-Heures-Rh-2026!` | Administration RH |
 | `chef` | `Gestion-Heures-Chef-2026!` | Chef de service (DSI) |
 | `agent` | `Gestion-Heures-Agent-2026!` | Agent (DSI) |

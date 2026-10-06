@@ -889,28 +889,6 @@ dl.row > dd {
   background: white;
 }
 
-.demo-accounts { margin-top: 1.15rem; }
-.demo-accounts-title {
-  margin: 0 0 .45rem;
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.demo-accounts-list { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
-.demo-account {
-  text-align: left;
-  border: 1px solid var(--line);
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: .45rem .6rem;
-  cursor: pointer;
-}
-.demo-account strong { display: block; color: var(--blue-deep); font-size: .86rem; }
-.demo-account span { color: var(--muted); font-size: .72rem; }
-.demo-account:hover { border-color: #b9d7f8; background: white; }
-
 #preview-duree,
 #preview-type { color: #0057b8; }
 

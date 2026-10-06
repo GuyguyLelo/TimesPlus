@@ -129,13 +129,10 @@ _REPORTS = (
 ADMIN_RH_PERMS = (
     _AGENT_PERMS
     + _SERVICE_PERMS
-    + _REFERENTIEL
+    + tuple(code for code in _REFERENTIEL if code != "overtime.manage_rules")
     + _OVERTIME_CUSTOM
     + _OVERTIME_MODEL
     + _WORKFLOW
-    + _USERS
-    + _SETTINGS
-    + _AUDIT
     + _REPORTS
 )
 

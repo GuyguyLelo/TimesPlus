@@ -20,7 +20,7 @@ from apps.services.models import Service
 from apps.settings_app.models import SiteSettings
 from apps.workflow.models import WorkflowDefinition, WorkflowStep
 DEMO_PASSWORDS = {
-    "admin": "Gestion-Heures-Admin-2026!",
+    "admin": "Admin@123",
     "rh": "Gestion-Heures-Rh-2026!",
     "chef": "Gestion-Heures-Chef-2026!",
     "agent": "Gestion-Heures-Agent-2026!",
