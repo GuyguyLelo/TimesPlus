@@ -1,10 +1,10 @@
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission, User
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.accounts.roles import ensure_groups
 from apps.audit.models import AuditLog
-from apps.overtime.tests.helpers import PASSWORD, build_referential
+from apps.overtime.tests.helpers import PASSWORD, build_referential, make_user
 
 
 class AuthTests(TestCase):
@@ -65,6 +65,85 @@ class AuthTests(TestCase):
         self.assertRedirects(rules, reverse("dashboard:home"))
         journal = self.client.get(reverse("audit:list"))
         self.assertRedirects(journal, reverse("dashboard:home"))
+
+    def test_superuser_can_delete_another_user(self):
+        admin = make_user("admin", "SUPER_ADMIN", superuser=True)
+        self.client.login(username="admin", password=PASSWORD)
+        cible = User.objects.get(username="agent")
+        page = self.client.get(reverse("accounts:users"))
+        self.assertContains(page, reverse("accounts:user_delete", args=[cible.pk]))
+        self.assertNotContains(page, reverse("accounts:user_delete", args=[admin.pk]))
+        confirm = self.client.get(reverse("accounts:user_delete", args=[cible.pk]))
+        self.assertContains(confirm, "Confirmez la suppression du compte agent")
+        done = self.client.post(reverse("accounts:user_delete", args=[cible.pk]))
+        self.assertRedirects(done, reverse("accounts:users"))
+        self.assertFalse(User.objects.filter(username="agent").exists())
+        self.assertTrue(AuditLog.objects.filter(action="SUPPRESSION", model_name="User", object_id=str(cible.pk)).exists())
+        soi = self.client.post(reverse("accounts:user_delete", args=[admin.pk]))
+        self.assertRedirects(soi, reverse("accounts:users"))
+        self.assertTrue(User.objects.filter(username="admin").exists())
+
+    def test_superuser_manages_groups(self):
+        make_user("admin", "SUPER_ADMIN", superuser=True)
+        self.client.login(username="admin", password=PASSWORD)
+        permission = Permission.objects.get(codename="view_agent", content_type__app_label="agents")
+        membre = User.objects.get(username="agent")
+        created = self.client.post(
+            reverse("accounts:group_create"),
+            {"name": "CELLULE", "permissions": [permission.pk], "membres": [membre.pk]},
+        )
+        groupe = Group.objects.get(name="CELLULE")
+        self.assertRedirects(created, reverse("accounts:group_detail", args=[groupe.pk]))
+        self.assertTrue(groupe.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(membre.groups.filter(pk=groupe.pk).exists())
+        listing = self.client.get(reverse("accounts:groups"))
+        self.assertContains(listing, "Nouveau groupe")
+        self.assertContains(listing, reverse("accounts:group_delete", args=[groupe.pk]))
+        role = Group.objects.get(name="ADMIN_RH")
+        self.assertNotContains(listing, reverse("accounts:group_delete", args=[role.pk]))
+        renamed = self.client.post(
+            reverse("accounts:group_update", args=[groupe.pk]),
+            {"name": "CELLULE-2", "permissions": [permission.pk]},
+        )
+        self.assertRedirects(renamed, reverse("accounts:group_detail", args=[groupe.pk]))
+        groupe.refresh_from_db()
+        self.assertEqual(groupe.name, "CELLULE-2")
+        self.assertFalse(membre.groups.filter(pk=groupe.pk).exists())
+        deleted = self.client.post(reverse("accounts:group_delete", args=[groupe.pk]))
+        self.assertRedirects(deleted, reverse("accounts:groups"))
+        self.assertFalse(Group.objects.filter(pk=groupe.pk).exists())
+        refused = self.client.post(reverse("accounts:group_delete", args=[role.pk]))
+        self.assertRedirects(refused, reverse("accounts:group_detail", args=[role.pk]))
+        self.assertTrue(Group.objects.filter(name="ADMIN_RH").exists())
+        edition = self.client.get(reverse("accounts:group_update", args=[role.pk]))
+        self.assertContains(edition, "disabled")
+        self.assertContains(edition, "Permissions")
+        self.assertContains(edition, "Membres")
+        self.assertContains(edition, 'class="perm-fr"')
+        self.assertContains(edition, "Peut consulter agent")
+        self.assertContains(edition, "Peut ajouter utilisateur")
+
+    def test_user_edit_form_is_grouped(self):
+        make_user("admin", "SUPER_ADMIN", superuser=True)
+        self.client.login(username="admin", password=PASSWORD)
+        cible = User.objects.get(username="rh")
+        page = self.client.get(reverse("accounts:user_update", args=[cible.pk]))
+        self.assertContains(page, "Identité")
+        self.assertContains(page, "Mot de passe")
+        self.assertContains(page, "Rôles et accès")
+        self.assertContains(page, "Rattachement")
+        self.assertContains(page, "code-chip")
+        self.assertContains(page, "role-picks")
+        self.assertContains(page, "Laissez vide pour conserver le mot de passe actuel.")
+
+    def test_rh_cannot_delete_a_user(self):
+        self.client.login(username="rh", password=PASSWORD)
+        cible = User.objects.get(username="agent")
+        page = self.client.get(reverse("accounts:users"))
+        self.assertRedirects(page, reverse("dashboard:home"))
+        done = self.client.post(reverse("accounts:user_delete", args=[cible.pk]))
+        self.assertRedirects(done, reverse("dashboard:home"))
+        self.assertTrue(User.objects.filter(username="agent").exists())
 
     def test_roles_exist(self):
         ensure_groups(force=True)

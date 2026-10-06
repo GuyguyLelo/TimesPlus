@@ -137,6 +137,17 @@
   });
   document.documentElement.classList.add("lists-ready");
 
+  document.querySelectorAll(".perm-fr").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var actif = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", actif ? "true" : "false");
+      var zone = button.closest(".perm-zone") || document;
+      zone.querySelectorAll(".perm-label").forEach(function (label) {
+        label.textContent = actif ? label.getAttribute("data-fr") : label.getAttribute("data-en");
+      });
+    });
+  });
+
   document.querySelectorAll(".nav-branch").forEach(function (branch) {
     var parent = branch.querySelector(".nav-parent");
     if (!parent) {

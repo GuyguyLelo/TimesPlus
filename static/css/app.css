@@ -430,7 +430,14 @@ button.nav-parent {
 }
 .app-content > form.row { padding: .85rem .9rem .15rem; }
 
-.form-card { max-width: 920px; }
+.form-card { max-width: 1160px; }
+.presence-sheet {
+  max-width: 720px;
+  margin-inline: auto;
+}
+.presence-sheet .page-intro { text-align: center; }
+.presence-sheet .form-card { max-width: none; }
+.presence-sheet .form-actions { justify-content: center; }
 .form-card > .card-body > h1,
 .card > .card-body > h1 { margin-bottom: 1rem; }
 
@@ -1073,7 +1080,7 @@ a.filiation-card:hover {
 }
 .agent-mini img { width: 100%; height: 100%; object-fit: cover; }
 .agent-form-card {
-  max-width: 760px;
+  max-width: 1000px;
   margin: 0 auto;
   border: 1px solid #d5e0ec;
   border-radius: 14px;
@@ -1102,6 +1109,74 @@ a.filiation-card:hover {
 .agent-form-card .form-select { min-height: 36px; padding-top: .3rem; padding-bottom: .3rem; }
 .agent-form-card .field-check { padding: .5rem .7rem .5rem 2rem; }
 .agent-form-card .form-actions { justify-content: center; margin-top: .75rem; padding-top: .7rem; }
+.user-form-id { margin: .35rem 0 0; }
+.user-form-card .saisie-note { margin: 0 0 .45rem; }
+.role-picks { margin-bottom: .55rem; }
+.role-picks-list,
+.role-picks ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .role-picks-list,
+  .role-picks ul { grid-template-columns: 1fr 1fr; }
+}
+.role-picks-list li,
+.role-picks li { margin: 0; }
+.role-picks-list li label,
+.role-picks li label {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin: 0;
+  padding: .5rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #10283f;
+  font-size: .84rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.role-picks-list li label:hover,
+.role-picks li label:hover { border-color: #b9d7f8; background: white; }
+.role-picks-list input,
+.role-picks input { margin: 0; accent-color: #007fff; }
+.perm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+}
+.perm-fr {
+  border: 1px solid #007fff;
+  background: white;
+  color: #007fff;
+  border-radius: 999px;
+  padding: .12rem .55rem;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.4;
+  text-transform: none;
+}
+.perm-fr[aria-pressed="true"] {
+  background: #007fff;
+  color: white;
+}
+.perm-block { margin-top: .75rem; }
+.perm-block h3 {
+  margin: 0 0 .35rem;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #5c6775;
+}
 .saisie-note { margin: .35rem 0 0; color: #5c6775; font-size: .82rem; }
 .service-picker { position: relative; }
 .service-picker > select {

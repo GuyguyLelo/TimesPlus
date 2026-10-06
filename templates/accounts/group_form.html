@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load libelles %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card agent-form-card user-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker">Administration</p>
+      <h1>{{ title }}</h1>
+      {% if protege %}
+        <p class="saisie-note">Ce rôle est livré avec l'application. Une migration rétablit ses permissions.</p>
+      {% endif %}
+    </header>
+    <form method="post">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+
+      <section class="form-section">
+        <h2>Identité</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.name %}
+        </div>
+      </section>
+
+      <section class="form-section perm-zone">
+        <h2 class="perm-toolbar">
+          Permissions
+          <button type="button" class="perm-fr" aria-pressed="false">FR</button>
+        </h2>
+        {% for error in form.permissions.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        {% for bloc in permissions_groupes %}
+          <div class="perm-block">
+            <h3>{{ bloc.label }}</h3>
+            <ul class="role-picks-list">
+              {% for perm in bloc.perms %}
+                <li>
+                  <label>
+                    <input type="checkbox" name="permissions" value="{{ perm.pk }}" {% if perm.pk in permissions_cochees %}checked{% endif %}>
+                    <span class="perm-label" data-en="{{ perm.name }}" data-fr="{{ perm.name|nom_fr }}">{{ perm.name }}</span>
+                  </label>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </section>
+
+      <section class="form-section">
+        <h2>Membres</h2>
+        <div class="field role-picks is-wide{% if form.membres.errors %} is-invalid{% endif %}">
+          {{ form.membres }}
+          {% for error in form.membres.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{% if groupe %}{% url 'accounts:group_detail' groupe.pk %}{% else %}{% url 'accounts:groups' %}{% endif %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

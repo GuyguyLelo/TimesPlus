@@ -1,11 +1,18 @@
 {% extends "base.html" %}
+{% load libelles %}
 {% block title %}{{ groupe.name }}{% endblock %}
 {% block content %}
 <section class="card detail-hero mb-3">
   <p class="agent-kicker">Groupe</p>
   <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <h1>{{ groupe.name }}</h1>
-    <a class="btn btn-outline-secondary" href="{% url 'accounts:groups' %}">Retour</a>
+    <div class="filter-actions">
+      <a class="btn btn-outline-primary" href="{% url 'accounts:group_update' groupe.pk %}">Modifier</a>
+      {% if not protege %}
+        <a class="btn btn-outline-danger" href="{% url 'accounts:group_delete' groupe.pk %}">Supprimer</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'accounts:groups' %}">Retour</a>
+    </div>
   </div>
   <div class="agent-tags">
     <span class="code-chip">{{ groupe.user_set.count }} membre{{ groupe.user_set.count|pluralize }}</span>
@@ -30,14 +37,17 @@
       {% endfor %}
     </ul>
   </section>
-  <section class="card ref-panel">
-    <header class="ref-head"><h2>Permissions</h2></header>
+  <section class="card ref-panel perm-zone">
+    <header class="ref-head perm-toolbar">
+      <h2>Permissions</h2>
+      <button type="button" class="perm-fr" aria-pressed="false">FR</button>
+    </header>
     <ul class="ref-list">
       {% for perm in groupe.permissions.all %}
         <li>
           <div class="ref-main">
             <span class="code-chip">{{ perm.content_type.app_label }}</span>
-            <strong>{{ perm.name }}</strong>
+            <strong class="perm-label" data-en="{{ perm.name }}" data-fr="{{ perm.name|nom_fr }}">{{ perm.name }}</strong>
           </div>
         </li>
       {% empty %}

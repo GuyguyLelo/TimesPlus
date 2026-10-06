@@ -1,13 +1,67 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<div class="card form-card"><div class="card-body">
-  <h1 class="h4">{{ title }}</h1>
-  <form method="post">{% csrf_token %}{% include "partials/form_fields.html" %}
-    <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Enregistrer</button>
-      <a class="btn btn-outline-secondary" href="{% url 'accounts:users' %}">Annuler</a>
-    </div>
-  </form>
-</div></div>
+<div class="card agent-form-card user-form-card">
+  <div class="card-body">
+    <header class="agent-form-head">
+      <p class="agent-kicker">Administration</p>
+      <h1>{{ title }}</h1>
+      {% if user_obj %}
+        <p class="user-form-id"><span class="code-chip">{{ user_obj.username }}</span></p>
+      {% endif %}
+    </header>
+    <form method="post">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <div class="alert alert-warning" role="alert">{{ error }}</div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+      <section class="form-section">
+        <h2>Identité</h2>
+        <div class="field-grid">
+          {% if form.username %}{% include "partials/one_field.html" with field=form.username %}{% endif %}
+          {% include "partials/one_field.html" with field=form.first_name %}
+          {% include "partials/one_field.html" with field=form.last_name %}
+          {% include "partials/one_field.html" with field=form.email %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Mot de passe</h2>
+        {% if user_obj %}<p class="saisie-note">Laissez vide pour conserver le mot de passe actuel.</p>{% endif %}
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.password1 %}
+          {% include "partials/one_field.html" with field=form.password2 %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Rôles et accès</h2>
+        <div class="field role-picks is-wide{% if form.groups.errors %} is-invalid{% endif %}">
+          <label class="form-label" for="{{ form.groups.id_for_label }}">{{ form.groups.label }}</label>
+          {{ form.groups }}
+          {% for error in form.groups.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.is_active %}
+          {% include "partials/one_field.html" with field=form.is_staff %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Rattachement</h2>
+        <div class="field-grid">
+          {% include "partials/one_field.html" with field=form.agent %}
+          {% include "partials/one_field.html" with field=form.service %}
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:users' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

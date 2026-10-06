@@ -1,10 +1,23 @@
 from django import forms
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.auth.password_validation import validate_password
 
 from apps.accounts.form_mixins import BootstrapFormMixin
+from apps.accounts.roles import GROUP_NAMES
 from apps.agents.models import Agent
 from apps.services.models import Service
+
+LIBELLES_APPLICATIONS = {
+    "accounts": "Comptes",
+    "agents": "Personnel",
+    "audit": "Audit",
+    "auth": "Authentification",
+    "overtime": "Heures supplémentaires",
+    "reports": "Rapports",
+    "services": "Services",
+    "settings_app": "Paramètres",
+    "workflow": "Validation",
+}
 
 
 class UserCreateForm(BootstrapFormMixin, forms.Form):
@@ -113,3 +126,95 @@ class UserUpdateForm(BootstrapFormMixin, forms.Form):
             if existing and existing.user_id != self.user_obj.id:
                 self.add_error("agent", "Cet agent est déjà lié à un utilisateur.")
         return cleaned
+
+
+class GroupForm(BootstrapFormMixin, forms.ModelForm):
+    permissions = forms.ModelMultipleChoiceField(
+        label="Permissions",
+        queryset=Permission.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    membres = forms.ModelMultipleChoiceField(
+        label="Membres",
+        queryset=User.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Group
+        fields = ["name"]
+        labels = {"name": "Nom"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["permissions"].queryset = (
+            Permission.objects.select_related("content_type")
+            .exclude(content_type__app_label__in={"admin", "contenttypes", "sessions"})
+            .order_by("content_type__app_label", "name")
+        )
+        self.fields["membres"].queryset = User.objects.order_by("username")
+        self.fields["name"].widget.attrs["autofocus"] = True
+        self.protege = bool(self.instance.pk and self.instance.name in GROUP_NAMES)
+        if self.instance.pk:
+            self.fields["permissions"].initial = self.instance.permissions.all()
+            self.fields["membres"].initial = self.instance.user_set.all()
+        if self.protege:
+            self.fields["name"].disabled = True
+            self.fields["name"].help_text = "Le nom d'un rôle de l'application ne peut pas être modifié."
+
+    def clean_name(self):
+        nom = (self.cleaned_data.get("name") or self.instance.name or "").strip()
+        doublon = Group.objects.filter(name__iexact=nom)
+        if self.instance.pk:
+            doublon = doublon.exclude(pk=self.instance.pk)
+        if doublon.exists():
+            raise forms.ValidationError("Ce nom est déjà utilisé.")
+        if self.protege and nom != self.instance.name:
+            raise forms.ValidationError("Le nom d'un rôle de l'application ne peut pas être modifié.")
+        return nom
+
+    def save(self, commit=True):
+        groupe = super().save(commit=commit)
+        if commit:
+            groupe.permissions.set(self.cleaned_data["permissions"])
+            groupe.user_set.set(self.cleaned_data["membres"])
+        return groupe
+
+
+def permissions_par_application():
+    blocs = {}
+    permissions = (
+        Permission.objects.select_related("content_type")
+        .exclude(content_type__app_label__in={"admin", "contenttypes", "sessions"})
+        .order_by("content_type__app_label", "name")
+    )
+    for permission in permissions:
+        blocs.setdefault(permission.content_type.app_label, []).append(permission)
+    return sorted(
+        (
+            {
+                "code": code,
+                "label": LIBELLES_APPLICATIONS.get(code, code),
+                "perms": perms,
+            }
+            for code, perms in blocs.items()
+        ),
+        key=lambda bloc: bloc["label"],
+    )
+
+
+def valeurs_cochees(form, nom):
+    valeur = form[nom].value()
+    if valeur is None:
+        return []
+    if hasattr(valeur, "values_list"):
+        return list(valeur.values_list("pk", flat=True))
+    coches = []
+    for item in valeur:
+        if hasattr(item, "pk"):
+            coches.append(item.pk)
+        elif str(item).isdigit():
+            coches.append(int(item))
+    return coches

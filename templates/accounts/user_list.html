@@ -35,7 +35,12 @@
         </div>
         <div class="ref-side">
           {% if item.is_active %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
-          <span class="row-actions"><a href="{% url 'accounts:user_update' item.pk %}"><i class="bi bi-person-gear"></i> Gérer</a></span>
+          <span class="row-actions">
+            <a href="{% url 'accounts:user_update' item.pk %}"><i class="bi bi-person-gear"></i> Gérer</a>
+            {% if request.user.is_superuser and item.pk != request.user.pk %}
+              <a class="is-danger" href="{% url 'accounts:user_delete' item.pk %}"><i class="bi bi-trash"></i> Supprimer</a>
+            {% endif %}
+          </span>
         </div>
       </li>
     {% empty %}
