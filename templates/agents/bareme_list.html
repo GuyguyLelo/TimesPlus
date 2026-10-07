@@ -2,37 +2,91 @@
 {% load ui %}
 {% block title %}Barème{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-end flex-wrap">
+<div class="bareme-head">
   <div class="page-intro mb-0">
     <p class="agent-kicker"><a href="{% url 'settings_app:parameters' %}">Paramètres</a></p>
     <h1>Barème</h1>
     <p>Taux horaire selon le grade et la fonction. Ce montant est un paramètre de l'administration.</p>
   </div>
-  <a class="btn btn-primary" href="{% url 'agents:bareme_create' %}">Ajouter</a>
+  <a class="btn btn-primary" href="{% url 'agents:bareme_create' %}"><i class="bi bi-plus-lg"></i> Nouveau barème</a>
 </div>
 
-<section class="card ref-panel">
+<div class="bareme-stats">
+  <article class="card stat-card stat-lignes">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-list-ol"></i></span>
+      <div>
+        <p class="stat-title is-lignes">Taux</p>
+        <strong>{{ bareme_total }}</strong>
+        <span class="stat-note">grade et fonction</span>
+      </div>
+    </div>
+  </article>
+  <article class="card stat-card stat-actifs">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-check2-circle"></i></span>
+      <div>
+        <p class="stat-title is-actifs">Actifs</p>
+        <strong>{{ bareme_actifs }}</strong>
+        <span class="stat-note">appliqués au calcul</span>
+      </div>
+    </div>
+  </article>
+  <article class="card stat-card stat-devise">
+    <div class="card-body">
+      <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
+      <div>
+        <p class="stat-title is-devise">Devise</p>
+        <strong>{{ site_settings.devise }}</strong>
+        <span class="stat-note">montant par heure</span>
+      </div>
+    </div>
+  </article>
+</div>
+
+<section class="card ref-panel bareme-panel">
   {% if baremes %}
-  <ul class="ref-list holiday-list">
-    {% for item in baremes %}
-      <li>
-        <div class="holiday-main">
-          <strong>{{ item.grade }}</strong>
-          <span>{{ item.fonction }}</span>
-          <span class="code-chip">{{ item.taux_horaire|montant:site_settings.devise }}</span>
-        </div>
-        <div class="ref-side">
-          {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
-          <span class="row-actions">
-            <a href="{% url 'agents:bareme_delete' item.pk %}"><i class="bi bi-trash"></i> Supprimer</a>
-          </span>
-        </div>
-      </li>
+    <div class="bareme-columns" aria-hidden="true">
+      <span>Grade et fonction</span>
+      <span>Taux horaire</span>
+      <span></span>
+    </div>
+    {% regroup baremes by grade.categorie as groupes %}
+    {% for group in groupes %}
+      <h3 class="ref-group cat-{{ group.grouper }}">
+        <span class="cat-mark">{{ group.grouper }}</span>
+        {{ group.list.0.grade.get_categorie_display }}
+        <span class="schedule-legend">{{ group.list|length }} taux</span>
+      </h3>
+      <ul class="ref-list bareme-list">
+        {% for item in group.list %}
+          <li class="{% if not item.actif %}is-off{% endif %}">
+            <div class="bareme-identity">
+              <span class="grade-code">{{ item.grade.abreviation|default:item.grade.categorie }}</span>
+              <div>
+                <strong>{{ item.grade.libelle }}</strong>
+                <span class="bareme-meta">
+                  {% if item.grade.echelon %}échelon {{ item.grade.echelon }}{% else %}sans échelon{% endif %}
+                  · {{ item.fonction }}
+                </span>
+              </div>
+            </div>
+            <div class="bareme-rate">
+              {{ item.taux_horaire|montant:site_settings.devise }}
+              <span>par heure</span>
+            </div>
+            <div class="ref-side">
+              {% if item.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+              <span class="row-actions">
+                <a class="is-primary" href="{% url 'agents:bareme_update' item.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+              </span>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
     {% endfor %}
-  </ul>
   {% else %}
     <p class="ref-empty"><i class="bi bi-inbox"></i>Aucun barème. Le calcul des heures supplémentaires exige un taux pour le grade et la fonction de l'agent.</p>
   {% endif %}
 </section>
-{% include "partials/pagination.html" %}
 {% endblock %}

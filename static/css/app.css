@@ -1642,6 +1642,102 @@ a.filiation-card:hover {
   .ref-list li { flex-wrap: wrap; }
 }
 
+.bareme-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.bareme-head .page-intro { margin-bottom: 0; }
+.bareme-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .85rem;
+  margin-bottom: 1rem;
+}
+.bareme-stats .stat-card {
+  border-width: 1px;
+  border-left-width: 4px;
+}
+.bareme-stats .stat-lignes { background: #eef2f7; border-color: #d5dee8; border-left-color: #0c3058; }
+.bareme-stats .stat-actifs { background: #e8f3ff; border-color: #c5dff8; border-left-color: #007fff; }
+.bareme-stats .stat-devise { background: #e8f6ee; border-color: #c9e6d4; border-left-color: #0d7a4f; }
+.stat-card .stat-title.is-lignes { color: #0c3058; }
+.stat-card .stat-title.is-actifs { color: #007fff; }
+.stat-card .stat-title.is-devise { color: #0d7a4f; }
+.bareme-stats .stat-devise strong { color: #0d7a4f; letter-spacing: .04em; }
+.bareme-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) 11rem auto;
+  gap: 1rem;
+  padding: .55rem 1.1rem;
+  color: #8aa0b8;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.ref-list.bareme-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) 11rem auto;
+  gap: 1rem;
+  align-items: center;
+}
+.bareme-identity {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+}
+.bareme-identity strong { display: block; line-height: 1.25; }
+.bareme-meta {
+  display: block;
+  margin-top: .12rem;
+  color: #5c6775;
+  font-size: .8rem;
+}
+.bareme-rate {
+  padding: .4rem .7rem;
+  border-radius: 10px;
+  background: #e8f3ff;
+  text-align: right;
+}
+.bareme-rate .montant {
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  color: #007fff;
+}
+.bareme-rate > span {
+  display: block;
+  margin-top: .08rem;
+  color: #5c7a99;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.bareme-list li.is-off .bareme-rate { background: #f4f7fb; }
+.bareme-list li.is-off .montant { color: #7b8794; }
+.bareme-list .ref-side { justify-content: flex-end; }
+.agent-form-card .form-section.bareme-taux {
+  margin-top: 1rem;
+  padding: .75rem .85rem .85rem;
+  border-radius: 12px;
+  background: #e8f3ff;
+}
+.agent-form-card .form-section.bareme-taux > h2 { border-bottom-color: #c5dff8; color: #007fff; }
+@media (max-width: 900px) {
+  .bareme-stats,
+  .bareme-columns,
+  .ref-list.bareme-list li { grid-template-columns: 1fr; }
+  .bareme-columns { display: none; }
+  .bareme-rate { text-align: left; }
+  .bareme-list .ref-side { justify-content: flex-start; }
+}
+
 .hs-head {
   display: flex;
   justify-content: space-between;

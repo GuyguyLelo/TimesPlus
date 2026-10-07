@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from apps.accounts.mixins import AppPermissionMixin, PageSizeMixin
+from apps.accounts.mixins import AppPermissionMixin
 from apps.agents.forms import BaremeForm
 from apps.agents.models import Bareme
 from apps.audit.utils import journaliser, model_snapshot
@@ -27,17 +27,28 @@ class _AuditedSaveMixin:
         return response
 
 
-class BaremeListView(PageSizeMixin, AppPermissionMixin, ListView):
+class BaremeListView(AppPermissionMixin, ListView):
     permission_required = "overtime.manage_rules"
     model = Bareme
     template_name = "agents/bareme_list.html"
     context_object_name = "baremes"
 
+    def get_paginate_by(self, queryset):
+        return None
+
     def get_queryset(self):
         return Bareme.objects.select_related("grade", "fonction").order_by(
+            "grade__categorie",
             "grade__ordre",
             "fonction__ordre",
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+        context["bareme_total"] = queryset.count()
+        context["bareme_actifs"] = queryset.filter(actif=True).count()
+        return context
 
 
 class BaremeCreateView(_AuditedSaveMixin, AppPermissionMixin, CreateView):
