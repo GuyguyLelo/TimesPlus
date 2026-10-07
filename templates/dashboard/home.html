@@ -27,15 +27,6 @@
       </select>
     </div>
     <div>
-      <label class="form-label" for="service">Service</label>
-      <select class="form-select" id="service" name="service" onchange="this.form.submit()">
-        <option value="">Tous</option>
-        {% for service in services %}
-          <option value="{{ service.pk }}" {% if selected.service == service.pk|stringformat:"s" %}selected{% endif %}>{{ service }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
       <label class="form-label" for="type">Type d'heure</label>
       <select class="form-select" id="type" name="type" onchange="this.form.submit()">
         <option value="">Tous</option>
@@ -50,29 +41,33 @@
     {% include "partials/reset_filters.html" %}
   </div>
 </form>
-<div class="rapport-stats is-quad">
-  <article class="card stat-card">
+<div class="rapport-stats is-quad dashboard-stats">
+  <article class="card stat-card stat-effectif">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-people"></i></span>
-      <div><p>Agents</p><strong>{{ cards.agents }}</strong></div>
+      <div>
+        <p class="stat-title is-effectif">Effectifs</p>
+        <strong>{{ cards.effectif }}</strong>
+        <span class="stat-note">{{ cards.effectif_detail }}</span>
+      </div>
     </div>
   </article>
-  <article class="card stat-card">
+  <article class="card stat-card stat-saisies">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-list-check"></i></span>
-      <div><p>Saisies</p><strong>{{ cards.saisies }}</strong></div>
+      <div><p class="stat-title is-saisies">Heures Sup. Saisies</p><strong>{{ cards.saisies }}</strong></div>
     </div>
   </article>
-  <article class="card stat-card">
+  <article class="card stat-card stat-duree">
     <div class="card-body">
       <span class="stat-icon icon-yellow"><i class="bi bi-clock"></i></span>
-      <div><p>Durée</p><strong>{{ cards.duree }}</strong></div>
+      <div><p class="stat-title is-duree">Durée</p><strong>{{ cards.duree }}</strong></div>
     </div>
   </article>
   <article class="card stat-card stat-montant">
     <div class="card-body">
       <span class="stat-icon icon-blue"><i class="bi bi-cash-coin"></i></span>
-      <div><p>Montant</p><strong><span class="montant">{{ cards.montant }} {{ site_settings.devise }}</span></strong></div>
+      <div><p class="stat-title is-montant">Montant</p><strong><span class="montant">{{ cards.montant }} {{ site_settings.devise }}</span></strong></div>
     </div>
   </article>
 </div>

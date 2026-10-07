@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import OuterRef, ProtectedError, Q, Subquery
+from django.db.models import ProtectedError, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -13,7 +13,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 
 from apps.accounts.mixins import DENIED, AppPermissionMixin, page_size
 from apps.agents.forms import AgentForm, AgentPhotoForm
-from apps.agents.models import Agent, Bareme, Fonction, Grade
+from apps.agents.models import Agent, Fonction, Grade
 from apps.audit.utils import journaliser, model_snapshot
 from apps.overtime.selectors import agents_visible
 from apps.reports.services.apercu import rendre_apercu
@@ -29,15 +29,7 @@ class AgentListView(AppPermissionMixin, ListView):
         return page_size()
 
     def get_queryset(self):
-        return _agents_liste(self.request).annotate(
-            taux_bareme=Subquery(
-                Bareme.objects.filter(
-                    grade_id=OuterRef("grade_id"),
-                    fonction_id=OuterRef("fonction_id"),
-                    actif=True,
-                ).values("taux_horaire")[:1]
-            )
-        ).order_by("nom", "postnom", "prenom")
+        return _agents_liste(self.request).order_by("nom", "postnom", "prenom")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

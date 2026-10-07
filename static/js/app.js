@@ -159,6 +159,26 @@
     });
   });
 
+  var personnel = document.getElementById("personnel-filters");
+  if (personnel) {
+    var champ = personnel.querySelector("#q");
+    var rechercheTimer = null;
+    if (champ) {
+      if (champ.value) {
+        champ.focus();
+        champ.setSelectionRange(champ.value.length, champ.value.length);
+      }
+      champ.addEventListener("input", function () {
+        window.clearTimeout(rechercheTimer);
+        rechercheTimer = window.setTimeout(function () {
+          if (champ.value !== champ.defaultValue) {
+            personnel.requestSubmit();
+          }
+        }, 350);
+      });
+    }
+  }
+
   var form = document.getElementById("declaration-form");
   if (!form) {
     return;

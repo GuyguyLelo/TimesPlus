@@ -6,11 +6,11 @@ from django.views.generic import TemplateView
 
 from apps.overtime.formatting import format_minutes, format_montant
 from apps.overtime.forms import ANNEE_MOIS, _NOMS_MOIS, _bornes_mois, _choix_mois
+from apps.overtime.listes import est_cadre
 from apps.overtime.models import OvertimeRequest, OvertimeType, PaiementMois
 from apps.overtime.paiement import mois_payes_numeros
-from apps.overtime.selectors import overtime_for_user
+from apps.overtime.selectors import agents_visible, overtime_for_user
 from apps.reports.services import by_agent
-from apps.services.selectors import services_for_user
 
 
 def error_403(request, exception):
@@ -39,10 +39,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         payes = set(mois_payes_numeros(ANNEE_MOIS))
 
         def restreint(queryset):
-            service = self.request.GET.get("service") or ""
             type_heure = self.request.GET.get("type") or ""
-            if str(service).isdigit():
-                queryset = queryset.filter(agent__service_id=int(service))
             if str(type_heure).isdigit():
                 queryset = queryset.filter(type_heure_id=int(type_heure))
             return queryset
@@ -57,13 +54,23 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             nombre=Count("id"),
         )
         paiement = PaiementMois.objects.filter(annee=ANNEE_MOIS, mois=numero).first()
+        personnel = agents_visible(self.request.user).select_related("grade", "fonction")
+        personnes = list(personnel)
+        cadres = sum(1 for agent in personnes if est_cadre(agent))
+
+        def _nombre(nombre, singulier, pluriel):
+            return f"{nombre} {singulier if nombre == 1 else pluriel}"
         context.update(
             {
                 "title": "Tableau de bord",
                 "periode": f"{_NOMS_MOIS[numero - 1]} {ANNEE_MOIS}",
                 "mois_valeur": choisi,
                 "cards": {
-                    "agents": du_mois.order_by().values("agent_id").distinct().count(),
+                    "effectif": len(personnes),
+                    "effectif_detail": (
+                        f"{_nombre(cadres, 'cadre', 'cadres')} · "
+                        f"{_nombre(len(personnes) - cadres, 'agent', 'agents')}"
+                    ),
                     "saisies": totaux["nombre"] or 0,
                     "duree": format_minutes(totaux["minutes"] or 0),
                     "montant": format_montant(totaux["montant"] or 0),
@@ -80,12 +87,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     .annotate(total=Sum("montant_estime"))
                     .order_by("-total")
                 ],
-                "services": services_for_user(self.request.user),
                 "types": OvertimeType.objects.filter(actif=True),
                 "mois_choices": _choix_mois({ANNEE_MOIS}),
                 "selected": {
                     "mois": choisi,
-                    "service": self.request.GET.get("service", ""),
                     "type": self.request.GET.get("type", ""),
                 },
             }
