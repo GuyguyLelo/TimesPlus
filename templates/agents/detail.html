@@ -21,7 +21,7 @@
         </div>
       </div>
       <div class="agent-tags">
-        <span class="code-chip">{{ agent.matricule }}</span>
+        <span class="code-chip">{{ agent.matricule|matricule }}</span>
         <span class="state state-{{ agent.statut|lower }}">{{ agent.get_statut_display }}</span>
       </div>
       <nav class="filiation" aria-label="Hiérarchie du service">

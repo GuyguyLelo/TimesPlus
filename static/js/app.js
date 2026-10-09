@@ -179,6 +179,49 @@
     }
   }
 
+  document.querySelectorAll(".service-filter").forEach(function (filtre) {
+    var toggle = filtre.querySelector(".service-filter-toggle");
+    var menu = filtre.querySelector(".service-filter-menu");
+    var input = filtre.querySelector("input[name=service]");
+    var valeur = filtre.querySelector(".service-filter-value");
+    if (!toggle || !menu || !input || !valeur) {
+      return;
+    }
+    function fermer() {
+      menu.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+    }
+    toggle.addEventListener("click", function () {
+      var ouvrir = menu.hidden;
+      menu.hidden = !ouvrir;
+      toggle.setAttribute("aria-expanded", ouvrir ? "true" : "false");
+    });
+    menu.querySelectorAll("button").forEach(function (choix) {
+      choix.addEventListener("click", function () {
+        input.value = choix.getAttribute("data-service") || "";
+        valeur.innerHTML = choix.innerHTML;
+        menu.querySelectorAll("button").forEach(function (item) {
+          item.classList.toggle("is-on", item === choix);
+        });
+        fermer();
+        var form = filtre.closest("form");
+        if (form) {
+          form.requestSubmit();
+        }
+      });
+    });
+    document.addEventListener("click", function (event) {
+      if (!filtre.contains(event.target)) {
+        fermer();
+      }
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        fermer();
+      }
+    });
+  });
+
   var form = document.getElementById("declaration-form");
   if (!form) {
     return;
@@ -248,27 +291,50 @@
 
   function showEffectifs() {
     var field = document.getElementById("id_effectifs");
+    var affichage = document.getElementById("preview-effectifs");
+    var aide = document.getElementById("id_effectifs-help");
     var url = form.getAttribute("data-effectifs-url");
     if (!field || !url || !dateField) {
       return;
     }
+    function poser(valeur, message) {
+      field.value = valeur;
+      if (affichage) {
+        affichage.textContent = valeur || "—";
+      }
+      if (aide && message) {
+        aide.textContent = message;
+      }
+    }
     if (!dateField.value) {
-      field.value = "";
+      poser("", "Choisissez une date pour afficher l'effectif.");
       return;
     }
     fetch(url + "?date=" + encodeURIComponent(dateField.value), {
-      headers: { "X-Requested-With": "fetch" }
+      headers: { "X-Requested-With": "fetch" },
+      credentials: "same-origin",
+      cache: "no-store"
     }).then(function (response) {
+      if (!response.ok) {
+        throw new Error();
+      }
       return response.json();
     }).then(function (data) {
-      field.value = data.effectifs ? String(data.effectifs) : "";
+      if (data.effectifs == null) {
+        poser("", "Aucune liste de présence pour cette date.");
+        return;
+      }
+      poser(String(data.effectifs), "Repris de la liste de présence de cette date.");
     }).catch(function () {
-      field.value = "";
+      if (!field.value && aide) {
+        aide.textContent = "L'effectif de la liste de présence n'a pas pu être lu.";
+      }
     });
   }
 
   if (dateField) {
     dateField.addEventListener("change", showEffectifs);
+    dateField.addEventListener("input", showEffectifs);
     showEffectifs();
   }
 

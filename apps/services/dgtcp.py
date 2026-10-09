@@ -268,7 +268,7 @@ _PROFILS = {
 
 
 def _enregistrer(unit, parent=None):
-    service, _ = Service.objects.update_or_create(
+    service, created = Service.objects.get_or_create(
         code=unit["code"],
         defaults={
             "nom": unit["nom"],
@@ -277,6 +277,11 @@ def _enregistrer(unit, parent=None):
             "actif": True,
         },
     )
+    if not created:
+        service.nom = unit["nom"]
+        service.niveau = unit["niveau"]
+        service.service_parent = parent
+        service.save(update_fields=["nom", "niveau", "service_parent"])
     if unit["code"] == "DGTCP" and not service.description:
         service.description = SOURCE
         service.save(update_fields=["description"])

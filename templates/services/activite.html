@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="activite-page {% if actif %}is-on{% else %}is-off{% endif %}">
+  <header class="activite-hero">
+    <div class="activite-mark">
+      {% if actif %}
+        <i class="bi bi-play-circle" aria-hidden="true"></i>
+      {% else %}
+        <i class="bi bi-pause-circle" aria-hidden="true"></i>
+      {% endif %}
+      <div>
+        <p class="agent-kicker">{% if actif %}Réactivation{% else %}Mise en inactivité{% endif %}</p>
+        <h1>{{ title }}</h1>
+      </div>
+    </div>
+    <p class="activite-lead">{{ message }}</p>
+  </header>
+
+  <article class="activite-direction">
+    <span class="code-chip">{{ service.code }}</span>
+    <div class="activite-identity">
+      <strong>{{ service.nom }}</strong>
+      <span class="niveau niveau-{{ service.niveau }}">{{ service.get_niveau_display }}</span>
+    </div>
+    {% if service.actif %}
+      <span class="state state-on">Actif</span>
+    {% else %}
+      <span class="state state-off">Inactif</span>
+    {% endif %}
+    <span class="activite-arrow" aria-hidden="true"><i class="bi bi-arrow-right"></i></span>
+    {% if actif %}
+      <span class="state state-on">Actif</span>
+    {% else %}
+      <span class="state state-off">Inactif</span>
+    {% endif %}
+  </article>
+
+  <div class="activite-stats">
+    <div class="fact">
+      <span>Unités concernées</span>
+      <strong>{{ unites|length }}</strong>
+    </div>
+    <div class="fact">
+      <span>Agents rattachés</span>
+      <strong>{{ agents }}</strong>
+    </div>
+    <div class="fact is-cible">
+      <span>État visé</span>
+      <strong>{% if actif %}Actif{% else %}Inactif{% endif %}</strong>
+    </div>
+  </div>
+
+  <section class="card ref-panel">
+    <header class="ref-head">
+      <h2>Unités qui suivent la direction</h2>
+      <p>Chaque division, secrétariat et bureau ci-dessous prend le même état que {{ service.code }}.</p>
+    </header>
+    <ul class="ref-list activite-list">
+      {% for unite in unites %}
+        <li style="--depth: {{ unite.profondeur }}">
+          <div class="ref-main">
+            <span class="code-chip">{{ unite.code }}</span>
+            <strong>{{ unite.nom }}</strong>
+            <span class="niveau niveau-{{ unite.niveau }}">{{ unite.get_niveau_display }}</span>
+            {% if unite.nb_agents %}
+              <span class="activite-agents">{{ unite.nb_agents }} agent{{ unite.nb_agents|pluralize }}</span>
+            {% endif %}
+          </div>
+          <div class="ref-side">
+            {% if unite.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+            <span class="activite-arrow" aria-hidden="true"><i class="bi bi-arrow-right"></i></span>
+            {% if actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
+          </div>
+        </li>
+      {% empty %}
+        <li class="ref-empty"><span><i class="bi bi-diagram-3"></i>Cette direction n'a pas d'unité rattachée.</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% if agents %}
+    <p class="activite-note">
+      <i class="bi bi-info-circle"></i>
+      Les agents restent dans leur unité. {% if actif %}Elle redevient proposable à l'affectation.{% else %}Elle ne sera plus proposée pour une nouvelle affectation.{% endif %}
+    </p>
+  {% endif %}
+
+  <form class="activite-actions" method="post">
+    {% csrf_token %}
+    <button class="btn {{ confirm_class }}" type="submit">
+      <i class="bi {% if actif %}bi-play-circle{% else %}bi-pause-circle{% endif %}"></i>
+      {{ confirm_label }}
+    </button>
+    <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Annuler</a>
+  </form>
+</section>
+{% endblock %}

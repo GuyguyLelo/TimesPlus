@@ -34,10 +34,10 @@ class _DateTimeMixin:
 
 class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
     effectifs = forms.IntegerField(
-        label="Effectifs",
+        label="Effectif",
         required=False,
         min_value=1,
-        help_text="Affiché automatiquement depuis la liste de présence de cette date.",
+        help_text="Repris de la liste de présence de cette date.",
     )
 
     class Meta:
@@ -150,9 +150,13 @@ class OvertimeRequestForm(BootstrapFormMixin, _DateTimeMixin, forms.ModelForm):
         from apps.overtime.models import ListePresence
 
         liste = ListePresence.objects.filter(date=jour).first() if jour else None
-        valeur = liste.effectifs if liste is not None and liste.effectifs else None
+        valeur = liste.effectifs if liste is not None and liste.effectifs is not None else None
         self.initial["effectifs"] = valeur
         self.fields["effectifs"].initial = valeur
+        if valeur is None:
+            self.fields["effectifs"].help_text = "Aucune liste de présence pour cette date."
+        else:
+            self.fields["effectifs"].help_text = "Repris de la liste de présence de cette date."
         if self.is_bound:
             data = self.data.copy()
             data["effectifs"] = "" if valeur is None else str(valeur)

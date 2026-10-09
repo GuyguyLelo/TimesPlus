@@ -2,6 +2,7 @@ from django import template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
+from apps.agents.matricule import format_matricule
 from apps.overtime.formatting import format_minutes, format_montant
 
 register = template.Library()
@@ -14,6 +15,11 @@ BADGES = {
     "REJETE": "danger",
     "ANNULE": "dark",
 }
+
+
+@register.filter(name="matricule")
+def matricule_lisible(value):
+    return format_matricule(value)
 
 
 @register.filter

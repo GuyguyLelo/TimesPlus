@@ -506,8 +506,10 @@ def search_agents(request):
         return JsonResponse({"results": []})
     queryset = Agent.objects.filter(actif=True).select_related("service", "grade", "fonction")
     for term in terms:
+        compact = term.replace(".", "")
         queryset = queryset.filter(
             Q(matricule__icontains=term)
+            | Q(matricule__icontains=compact)
             | Q(nom__icontains=term)
             | Q(postnom__icontains=term)
             | Q(prenom__icontains=term)

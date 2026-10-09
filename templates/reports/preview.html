@@ -50,7 +50,7 @@
 </div>
 {% if agent_fiche %}
 <div class="agent-facts mb-3">
-  <div class="fact"><span>Matricule</span><strong>{{ agent_fiche.matricule }}</strong></div>
+  <div class="fact"><span>Matricule</span><strong>{{ agent_fiche.matricule|matricule }}</strong></div>
   <div class="fact"><span>Nom</span><strong>{{ agent_fiche.nom_complet }}</strong></div>
   <div class="fact"><span>Grade</span><strong>{{ agent_fiche.grade|default:"—" }}</strong></div>
   <div class="fact"><span>Fonction</span><strong>{{ agent_fiche.fonction|default:"—" }}</strong></div>
@@ -104,7 +104,7 @@
         <tbody>
           {% for row in par_agent %}
             <tr>
-              <td>{{ row.agent__matricule }}</td>
+              <td>{{ row.agent__matricule|matricule }}</td>
               <td><strong class="row-title">{{ row.nom }}</strong></td>
               <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
               <td>{{ row.nombre }}</td>
@@ -166,7 +166,7 @@
   <tbody>
     {% for item in declarations %}
       <tr>
-        <td>{{ item.agent.matricule }}</td>
+        <td>{{ item.agent.matricule|matricule }}</td>
         <td>{{ item.agent.nom_complet }}</td>
         <td>{{ item.agent.service.code }}</td>
         <td>{{ item.date_travail|date:"d/m/Y" }}</td>

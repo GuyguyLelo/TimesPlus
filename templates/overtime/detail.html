@@ -23,7 +23,7 @@
   </div>
   <div class="agent-tags">
     {% if perms.agents.view_agent %}<a class="row-title" href="{% url 'agents:detail' declaration.agent.pk %}">{{ declaration.agent.nom_complet }}</a>{% else %}<span class="row-title">{{ declaration.agent.nom_complet }}</span>{% endif %}
-    <span class="code-chip">{{ declaration.agent.matricule }}</span>
+    <span class="code-chip">{{ declaration.agent.matricule|matricule }}</span>
     <span class="code-chip">{{ declaration.type_heure.code }}</span>
     <span>{{ declaration.agent.service }}</span>
   </div>

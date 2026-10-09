@@ -43,6 +43,8 @@ class PresenceListTests(TestCase):
         self.assertContains(saisie, 'name="effectifs"')
         self.assertContains(saisie, 'value="12"')
         self.assertContains(saisie, "readonly")
+        self.assertContains(saisie, "Repris de la liste de présence de cette date.")
+        self.assertContains(saisie, 'id="preview-effectifs"')
         lookup = self.client.get(reverse("overtime:presence_headcount") + "?date=2026-10-05")
         self.assertEqual(lookup.json()["effectifs"], 12)
         download = self.client.get(reverse("overtime:presence_download", args=[liste.pk]))

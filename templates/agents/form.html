@@ -44,9 +44,9 @@
           <div class="field is-wide service-field{% if form.service.errors %} is-invalid{% endif %}">
             <div class="service-picker">
               {{ form.service }}
-              <p class="service-path" id="service-path">Aucun service choisi.</p>
-              <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#service-modal">
-                <i class="bi bi-diagram-3"></i> Service d'affectation
+              <p class="service-path" id="service-path">Aucun cadre organique choisi.</p>
+              <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#service-modal" data-services-url="{% url 'agents:affectation' %}{% if form.instance.pk %}?agent={{ form.instance.pk }}{% endif %}">
+                <i class="bi bi-diagram-3"></i> Cadre organique
               </button>
             </div>
             {% for error in form.service.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
@@ -71,7 +71,7 @@
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title h5" id="service-modal-title">Service d'affectation</h2>
+        <h2 class="modal-title h5" id="service-modal-title">Cadre organique</h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
@@ -158,7 +158,7 @@
     var node = byId[String(select.value)];
     path.textContent = node
       ? lineage(node.id) + " — " + node.nom
-      : "Aucun service choisi.";
+      : "Aucun cadre organique choisi.";
   }
 
   function markSelected() {
@@ -255,10 +255,62 @@
     return any;
   }
 
+  function syncSelect(nodes) {
+    var courant = select.value;
+    var valeurs = [];
+    function walk(list) {
+      list.forEach(function (node) {
+        valeurs.push(node);
+        walk(node.children || []);
+      });
+    }
+    walk(nodes);
+    var connu = {};
+    select.replaceChildren();
+    var vide = document.createElement("option");
+    vide.value = "";
+    vide.textContent = "Choisir un cadre organique";
+    select.appendChild(vide);
+    valeurs.forEach(function (node) {
+      var option = document.createElement("option");
+      option.value = String(node.id);
+      option.textContent = node.code + " — " + node.nom;
+      select.appendChild(option);
+      connu[String(node.id)] = true;
+    });
+    select.value = connu[courant] ? courant : "";
+  }
+
+  function appliquer(nouveau) {
+    tree = nouveau;
+    byId = {};
+    index(tree);
+    root.replaceChildren();
+    if (query) query.value = "";
+    root.appendChild(build(tree, 0));
+    syncSelect(tree);
+    markSelected();
+  }
+
   index(tree);
   root.appendChild(build(tree, 0));
   markSelected();
   var modalEl = document.getElementById("service-modal");
+  var servicesUrl = document.querySelector("[data-services-url]");
+  if (modalEl) {
+    modalEl.addEventListener("show.bs.modal", function () {
+      var url = servicesUrl ? servicesUrl.getAttribute("data-services-url") : "";
+      if (!url) return;
+      fetch(url, {
+        headers: {Accept: "application/json"},
+        credentials: "same-origin",
+        cache: "no-store"
+      }).then(function (response) {
+        if (!response.ok) throw new Error();
+        return response.json();
+      }).then(appliquer).catch(function () {});
+    });
+  }
   if (modalEl && query) {
     modalEl.addEventListener("shown.bs.modal", function () {
       query.focus();

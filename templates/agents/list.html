@@ -5,7 +5,8 @@
 <div class="d-flex justify-content-between mb-3">
   <h1 class="h3">Gestion du personnel</h1>
   <div class="filter-actions">
-    <a class="btn btn-outline-primary" href="{% url 'agents:print' %}?{% querystring page='' %}"><i class="bi bi-printer"></i> Imprimer</a>
+    <a class="btn btn-outline-primary" href="{% url 'agents:print' %}?{% querystring page='' %}"><i class="bi bi-printer"></i> Imprimer la liste</a>
+    <a class="btn btn-outline-primary" href="{% url 'agents:synthese' %}?{% querystring page='' %}"><i class="bi bi-table"></i> Tableau synthèse</a>
     {% if perms.agents.add_agent %}<a class="btn btn-primary" href="{% url 'agents:create' %}">Nouvel agent</a>{% endif %}
   </div>
 </div>
@@ -15,12 +16,40 @@
       <label class="form-label" for="q">Recherche</label>
       <input class="form-control" id="q" type="search" name="q" value="{{ query }}" placeholder="Matricule, nom, prénom">
     </div>
-    <div class="col-md-3">
-      <label class="form-label" for="service">Service</label>
-      <select class="form-select" id="service" name="service">
-        <option value="">Tous les services</option>
-        {% for service in services %}<option value="{{ service.pk }}" {% if request.GET.service == service.pk|stringformat:"s" %}selected{% endif %}>{{ service }}</option>{% endfor %}
-      </select>
+    <div class="col-md-4">
+      <label class="form-label" id="service-label">Service</label>
+      <div class="service-filter">
+        <input type="hidden" name="service" id="service" value="{{ request.GET.service }}">
+        <button class="service-filter-toggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="service-label">
+          <span class="service-filter-value">
+            {% for service in services %}
+              {% if request.GET.service == service.pk|stringformat:"s" %}
+                <span class="code-chip">{{ service.code }}</span>
+                <span class="niveau niveau-{{ service.niveau }}">{{ service.get_niveau_display }}</span>
+                <span class="service-filter-name">{{ service.nom }}</span>
+              {% endif %}
+            {% endfor %}
+            {% if not request.GET.service %}<span class="service-filter-name">Tous les services</span>{% endif %}
+          </span>
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+        <ul class="service-filter-menu" role="listbox" hidden>
+          <li>
+            <button type="button" data-service="" {% if not request.GET.service %}class="is-on"{% endif %}>
+              <span class="service-filter-name">Tous les services</span>
+            </button>
+          </li>
+          {% for service in services %}
+            <li>
+              <button type="button" data-service="{{ service.pk }}" style="--depth: {{ service.profondeur }}" {% if request.GET.service == service.pk|stringformat:"s" %}class="is-on"{% endif %}>
+                <span class="code-chip">{{ service.code }}</span>
+                <span class="niveau niveau-{{ service.niveau }}">{{ service.get_niveau_display }}</span>
+                <span class="service-filter-name">{{ service.nom }}</span>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
     <div class="col-md-2">
       <label class="form-label" for="actif">Statut</label>
@@ -41,7 +70,7 @@
   <tbody>
     {% for agent in agents %}
       <tr>
-        <td><span class="code-chip">{{ agent.matricule }}</span></td>
+        <td><span class="code-chip">{{ agent.matricule|matricule }}</span></td>
         <td>
           <div class="agent-name-cell">
             <a class="agent-mini" href="{% url 'agents:detail' agent.pk %}" tabindex="-1" aria-hidden="true">

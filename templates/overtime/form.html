@@ -39,7 +39,7 @@
               </div>
               <div class="agent-pick-id">
                 <strong id="agent-pick-name">{{ form.agent_carte.nom }}</strong>
-                <span class="code-chip" id="agent-pick-matricule">{{ form.agent_carte.matricule }}</span>
+                <span class="code-chip" id="agent-pick-matricule">{{ form.agent_carte.matricule|matricule }}</span>
                 <p id="agent-pick-role">{% if form.agent_carte.grade %}{{ form.agent_carte.grade }}{% endif %}{% if form.agent_carte.grade and form.agent_carte.fonction %} · {% endif %}{% if form.agent_carte.fonction %}{{ form.agent_carte.fonction }}{% endif %}</p>
                 <p id="agent-pick-service">{{ form.agent_carte.service }}</p>
                 <p id="agent-pick-taux">Taux horaire : {% if form.agent_carte.taux %}<span class="montant">{{ form.agent_carte.taux }}</span>{% endif %}</p>
@@ -76,6 +76,10 @@
         <div>
           <span>Type détecté</span>
           <strong id="preview-type">{% if calculation %}{{ calculation.type_code }}{% else %}—{% endif %}</strong>
+        </div>
+        <div>
+          <span>Effectif</span>
+          <strong id="preview-effectifs">{{ form.effectifs.value|default:"—" }}</strong>
         </div>
         <p id="preview-message">Le calcul enregistré fait foi. Cet aperçu interroge le serveur.</p>
       </section>

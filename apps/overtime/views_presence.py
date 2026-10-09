@@ -135,6 +135,7 @@ class PresenceUpdateView(AppPermissionMixin, FormView):
 def presence_effectifs(request):
     if not (
         request.user.has_perm("overtime.view_overtime")
+        or request.user.has_perm("overtime.add_overtime")
         or request.user.is_superuser
     ):
         return JsonResponse({"effectifs": None}, status=403)

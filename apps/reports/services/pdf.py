@@ -22,6 +22,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from apps.agents.matricule import format_matricule
 from apps.overtime.formatting import format_minutes, format_montant
 from apps.reports.services import by_agent, by_service, by_type, historique_par_mois, report_totals
 
@@ -274,7 +275,11 @@ def _info_card(styles, title, pairs, width):
 
 
 def _data_table(styles, headers, rows, widths, right_columns=()):
-    head = [_rich(escape(item), styles["head"]) for item in headers]
+    head_right = ParagraphStyle("RecuHeadRight", parent=styles["head"], alignment=TA_RIGHT)
+    head = [
+        _rich(escape(item), head_right if index in right_columns else styles["head"])
+        for index, item in enumerate(headers)
+    ]
     body = []
     for row in rows:
         body.append([
@@ -423,7 +428,7 @@ def _fiche_individuelle(queryset, *, site, numero, periode, genere_le, agent=Non
     )
     half = (width - 4 * mm) / 2
     identite = [
-        ("Matricule", agent.matricule if agent else "—"),
+        ("Matricule", format_matricule(agent.matricule) if agent else "—"),
         ("Nom", agent.nom_complet if agent else "—"),
         ("Grade", agent.grade if agent and agent.grade_id else "—"),
         ("Fonction", agent.fonction if agent and agent.fonction_id else "—"),
@@ -547,7 +552,7 @@ def _liste_collective(queryset, *, site, numero, periode, genere_le):
             if item["agent__service__nom"]:
                 service = f"{service} — {item['agent__service__nom']}"
             rows.append([
-                escape(item["agent__matricule"] or "—"),
+                escape(format_matricule(item["agent__matricule"])),
                 escape(item["nom"] or "—"),
                 escape(service),
                 escape(str(item["nombre"])),
@@ -621,7 +626,7 @@ def _rapport_historique(queryset, *, site, numero, periode, genere_le):
             if item["agent__service__nom"]:
                 service = f"{service} — {item['agent__service__nom']}"
             rows.append([
-                escape(item["agent__matricule"] or "—"),
+                escape(format_matricule(item["agent__matricule"])),
                 escape(item["nom"] or "—"),
                 escape(service),
                 escape(str(item["nombre"])),
@@ -745,7 +750,7 @@ def build_pdf(kind, queryset, *, site, numero, periode, utilisateur, genere_le, 
     elif kind == "SERVICE":
         agent_rows = [
             [
-                item["agent__matricule"],
+                format_matricule(item["agent__matricule"]),
                 " ".join(part for part in (item["agent__nom"], item["agent__postnom"], item["agent__prenom"]) if part),
                 item["nombre"],
                 format_minutes(item["minutes"] or 0),
@@ -762,7 +767,7 @@ def build_pdf(kind, queryset, *, site, numero, periode, utilisateur, genere_le, 
         detail_rows = []
         for demande in queryset:
             detail_rows.append([
-                demande.agent.matricule,
+                format_matricule(demande.agent.matricule),
                 demande.agent.nom_complet,
                 demande.agent.service.code,
                 demande.date_travail.strftime("%d/%m/%Y"),

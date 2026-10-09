@@ -1,6 +1,19 @@
 """Sélection des services visibles et du périmètre hiérarchique."""
 
 
+def appliquer_activite(service, actif):
+    """Active ou désactive un service et toutes les unités qui en dépendent."""
+    from django.utils import timezone
+
+    from apps.services.models import Service
+
+    identifiants = descendant_ids(service.pk)
+    return Service.objects.filter(pk__in=identifiants).update(
+        actif=actif,
+        updated_at=timezone.now(),
+    )
+
+
 def descendant_ids(service_id):
     """Identifiants du service et de tous ses sous-services."""
     from apps.services.models import Service
@@ -25,6 +38,44 @@ def managed_service_ids(user):
     if not profile.service_id:
         return set()
     return descendant_ids(profile.service_id)
+
+
+def services_pour_affectation(conserver_id=None):
+    """Services proposés pour l'affectation d'un agent.
+
+    Une unité n'est proposée que si elle est active et qu'elle appartient à une
+    direction active. Les secrétariats et postes rattachés seulement à une
+    direction générale inactive restent hors de la liste.
+    """
+    from apps.services.models import Service
+
+    lignes = {
+        pk: (actif, niveau, parent_id)
+        for pk, actif, niveau, parent_id in Service.objects.values_list(
+            "pk", "actif", "niveau", "service_parent_id"
+        )
+    }
+
+    def direction_active(pk):
+        vus = set()
+        courant = pk
+        while courant and courant not in vus:
+            vus.add(courant)
+            actif, niveau, parent_id = lignes[courant]
+            if niveau == Service.Niveau.DIRECTION:
+                return actif
+            courant = parent_id
+        return None
+
+    choisis = []
+    for pk, (actif, niveau, _parent_id) in lignes.items():
+        if not actif:
+            continue
+        if niveau == Service.Niveau.DIRECTION or direction_active(pk) is True:
+            choisis.append(pk)
+    if conserver_id and conserver_id not in choisis:
+        choisis.append(conserver_id)
+    return Service.objects.filter(pk__in=choisis)
 
 
 def services_for_user(user):

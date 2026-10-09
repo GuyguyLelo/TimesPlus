@@ -22,6 +22,8 @@ class ReferentielTests(TestCase):
     def test_agent_form_offers_the_referential(self):
         self.client.login(username="rh", password=PASSWORD)
         response = self.client.get(reverse("agents:create"))
+        self.assertContains(response, "Grade statutaire")
+        self.assertContains(response, "Cadre organique")
         self.assertContains(response, "Secrétaire général")
         self.assertContains(response, "Chef de division, échelon 2")
         self.assertContains(response, "Directeur des ressources humaines")

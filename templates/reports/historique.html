@@ -51,7 +51,7 @@
         {% for item in consultation.lignes %}
           <tr>
             <td>{{ item.date_travail|date:"d/m/Y" }}</td>
-            <td>{{ item.agent.matricule }}</td>
+            <td>{{ item.agent.matricule|matricule }}</td>
             <td><strong class="row-title">{{ item.agent.nom_complet }}</strong></td>
             <td><span class="code-chip">{{ item.agent.service.code }}</span></td>
             <td>{{ item.heure_debut|time:"H:i" }}–{{ item.heure_fin|time:"H:i" }}</td>
@@ -115,7 +115,7 @@
       <tbody>
         {% for row in par_agent %}
           <tr>
-            <td>{{ row.agent__matricule }}</td>
+            <td>{{ row.agent__matricule|matricule }}</td>
             <td><strong class="row-title">{{ row.nom }}</strong></td>
             <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
             <td>{{ row.nombre }}</td>

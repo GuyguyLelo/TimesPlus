@@ -53,7 +53,16 @@
               {% endif %}
             {% endfor %}
             {% if service.actif %}<span class="state state-on">Actif</span>{% else %}<span class="state state-off">Inactif</span>{% endif %}
-            <span class="row-actions"><a href="{% url 'services:detail' service.pk %}"><i class="bi bi-eye"></i> Voir</a></span>
+            <span class="row-actions">
+              {% if perms.services.change_service and service.niveau == "DIRECTION" %}
+                {% if service.actif %}
+                  <a class="is-danger" href="{% url 'services:activite' service.pk %}?actif=0"><i class="bi bi-pause-circle"></i> Rendre inactif</a>
+                {% else %}
+                  <a class="is-primary" href="{% url 'services:activite' service.pk %}?actif=1"><i class="bi bi-play-circle"></i> Rendre actif</a>
+                {% endif %}
+              {% endif %}
+              <a href="{% url 'services:detail' service.pk %}"><i class="bi bi-eye"></i> Voir</a>
+            </span>
           </div>
         </li>
       {% endfor %}

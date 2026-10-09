@@ -54,6 +54,7 @@ def fiche_agent(agent):
     """Identité affichée lorsqu'un agent est choisi dans une saisie."""
     from django.urls import reverse
 
+    from apps.agents.matricule import format_matricule
     from apps.agents.models import taux_horaire_bareme
     from apps.overtime.formatting import format_montant
     from apps.settings_app.models import SiteSettings
@@ -62,7 +63,7 @@ def fiche_agent(agent):
     devise = SiteSettings.load().devise
     return {
         "id": agent.pk,
-        "matricule": agent.matricule,
+        "matricule": format_matricule(agent.matricule),
         "nom": agent.nom_complet,
         "grade": str(agent.grade) if agent.grade_id else "",
         "fonction": str(agent.fonction) if agent.fonction_id else "",

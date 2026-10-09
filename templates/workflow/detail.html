@@ -9,7 +9,7 @@
     <span class="badge text-bg-{{ declaration.statut|statut_badge }}">{{ declaration.get_statut_display }}</span>
   </div>
   <div class="agent-tags">
-    <span class="code-chip">{{ declaration.agent.matricule }}</span>
+    <span class="code-chip">{{ declaration.agent.matricule|matricule }}</span>
     <span class="code-chip">{{ declaration.type_heure.code }}</span>
     <span>{{ declaration.agent.service }}</span>
     {% if declaration.agent.grade %}<span>{{ declaration.agent.grade }}</span>{% endif %}

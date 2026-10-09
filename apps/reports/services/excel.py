@@ -6,6 +6,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+from apps.agents.matricule import format_matricule
 from apps.overtime.formatting import format_minutes, format_montant
 from apps.reports.services import by_service, report_totals
 
@@ -108,7 +109,7 @@ def build_workbook(queryset, *, site, numero, periode, utilisateur):
     for row_index, demande in enumerate(queryset, start=2):
         validator, validated_at = _validator(demande)
         values = [
-            demande.agent.matricule,
+            format_matricule(demande.agent.matricule),
             demande.agent.nom,
             demande.agent.postnom,
             demande.agent.prenom,

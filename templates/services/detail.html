@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}{{ service.nom }}{% endblock %}
 {% block content %}
 <section class="card detail-hero mb-3">
@@ -51,7 +52,7 @@
       {% for agent in service.agents.all %}
         <li>
           <div class="ref-main">
-            <span class="code-chip">{{ agent.matricule }}</span>
+            <span class="code-chip">{{ agent.matricule|matricule }}</span>
             {% if perms.agents.view_agent %}<a class="row-title" href="{% url 'agents:detail' agent.pk %}">{{ agent.nom_complet }}</a>{% else %}<strong>{{ agent.nom_complet }}</strong>{% endif %}
           </div>
           <span class="state state-{{ agent.statut|lower }}">{{ agent.get_statut_display }}</span>

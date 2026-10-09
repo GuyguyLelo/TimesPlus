@@ -4,7 +4,7 @@ from django.db.models import Q
 
 from apps.accounts.form_mixins import BootstrapFormMixin
 from apps.agents.models import Agent, Bareme, Fonction, Grade
-from apps.services.models import Service
+from apps.services.selectors import services_pour_affectation
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
 PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -91,18 +91,16 @@ class AgentForm(BootstrapFormMixin, forms.ModelForm):
             self.fields[name].input_formats = ["%Y-%m-%d"]
         self.fields["grade"].queryset = _kept(Grade, self.instance.grade_id)
         self.fields["fonction"].queryset = _kept(Fonction, self.instance.fonction_id)
+        self.fields["grade"].label = "Grade statutaire"
         self.fields["grade"].empty_label = "Choisir un grade"
         self.fields["fonction"].empty_label = "Choisir une fonction"
         self.fields["grade"].label_from_instance = lambda item: (
             f"{item.abreviation} · {item}" if item.abreviation else f"{item.categorie} · {item}"
         )
         self.fields["fonction"].label_from_instance = lambda item: f"{item.get_famille_display()} · {item.libelle}"
-        services = Service.objects.filter(actif=True)
-        if self.instance.service_id:
-            services = services | Service.objects.filter(pk=self.instance.service_id)
-        self.fields["service"].queryset = services.distinct()
-        self.fields["service"].label = "Service d'affectation"
-        self.fields["service"].empty_label = "Choisir un service"
+        self.fields["service"].queryset = services_pour_affectation(self.instance.service_id)
+        self.fields["service"].label = "Cadre organique"
+        self.fields["service"].empty_label = "Choisir un cadre organique"
         self.service_arbre = _arbre_services(self.fields["service"].queryset)
 
     def clean_photo(self):

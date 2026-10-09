@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import ProtectedError, Q
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -12,12 +12,31 @@ from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from apps.accounts.mixins import DENIED, AppPermissionMixin, page_size
-from apps.agents.forms import AgentForm, AgentPhotoForm
+from apps.agents.forms import AgentForm, AgentPhotoForm, _arbre_services
 from apps.agents.models import Agent, Fonction, Grade
 from apps.audit.utils import journaliser, model_snapshot
 from apps.overtime.selectors import agents_visible
 from apps.reports.services.apercu import rendre_apercu
-from apps.services.selectors import services_for_user
+from apps.services.selectors import services_for_user, services_pour_affectation
+
+
+@login_required
+def services_affectation(request):
+    """Arbre des services proposés à l'affectation, relu à chaque ouverture."""
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("agents.add_agent")
+        or request.user.has_perm("agents.change_agent")
+    ):
+        return JsonResponse({"detail": DENIED}, status=403)
+    conserver = None
+    agent_id = request.GET.get("agent")
+    if str(agent_id).isdigit():
+        agent = agents_visible(request.user).filter(pk=int(agent_id)).only("service_id").first()
+        if agent is not None:
+            conserver = agent.service_id
+    arbre = _arbre_services(services_pour_affectation(conserver))
+    return JsonResponse(arbre, safe=False)
 
 
 class AgentListView(AppPermissionMixin, ListView):
@@ -33,9 +52,31 @@ class AgentListView(AppPermissionMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["services"] = services_for_user(self.request.user)
+        context["services"] = _services_filtre(self.request.user)
         context["query"] = self.request.GET.get("q", "")
         return context
+
+
+def _services_filtre(user):
+    """Unités actives du filtre, indentées selon leur rattachement."""
+    visibles = services_for_user(user)
+    services = list(services_pour_affectation().filter(pk__in=visibles.values("pk")))
+    parents = {service.pk: service.service_parent_id for service in services}
+
+    def profondeur(service):
+        niveau = 0
+        courant = parents.get(service.pk)
+        vus = set()
+        while courant and courant in parents and courant not in vus:
+            vus.add(courant)
+            niveau += 1
+            courant = parents.get(courant)
+        return niveau
+
+    services.sort(key=lambda service: service.code)
+    for service in services:
+        service.profondeur = profondeur(service)
+    return services
 
 
 def _agents_liste(request):
@@ -50,8 +91,10 @@ def _agents_liste(request):
     )
     q = request.GET.get("q", "").strip()
     if q:
+        compact = q.replace(".", "")
         queryset = queryset.filter(
             Q(matricule__icontains=q)
+            | Q(matricule__icontains=compact)
             | Q(nom__icontains=q)
             | Q(postnom__icontains=q)
             | Q(prenom__icontains=q)
@@ -85,6 +128,30 @@ def agent_list_pdf(request):
         payload.getvalue(),
         "liste-du-personnel.pdf",
         "Liste déclarative par emboîtement",
+        retour,
+    )
+
+
+@login_required
+def agent_synthese_pdf(request):
+    if not request.user.has_perm("agents.view_agent") and not request.user.is_superuser:
+        messages.warning(request, DENIED)
+        return redirect("dashboard:home")
+    from apps.agents.annuaire import build_synthese_pdf
+    from apps.settings_app.models import SiteSettings
+
+    agents = list(_agents_liste(request))
+    genere_le = timezone.localtime().strftime("%d/%m/%Y %H:%M")
+    payload = build_synthese_pdf(agents, site=SiteSettings.load(), genere_le=genere_le)
+    params = {key: value for key, value in request.GET.items() if key != "page" and value}
+    retour = reverse("agents:list")
+    if params:
+        retour = f"{retour}?{urlencode(params)}"
+    return rendre_apercu(
+        request,
+        payload.getvalue(),
+        "tableau-synthese.pdf",
+        "Tableau synthèse",
         retour,
     )
 

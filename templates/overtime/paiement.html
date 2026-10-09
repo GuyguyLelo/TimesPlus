@@ -53,7 +53,7 @@
       <tbody>
         {% for row in consultation.par_agent %}
           <tr>
-            <td>{{ row.agent__matricule }}</td>
+            <td>{{ row.agent__matricule|matricule }}</td>
             <td><strong class="row-title">{{ row.nom }}</strong></td>
             <td><span class="code-chip">{{ row.agent__service__code }}</span> {{ row.agent__service__nom }}</td>
             <td>{{ row.nombre }}</td>
